@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row g-4">
+    <section class="col-lg-5">
+        <h2 class="h4">Контактні дані</h2>
+        <ul class="list-unstyled">
+            <li class="mb-2"><strong>Ім'я:</strong> {{ profile.name }}</li>
+            <li class="mb-2"><strong>E-mail:</strong> <a href="mailto:{{ profile.email }}">{{ profile.email }}</a></li>
+            <li class="mb-2"><strong>GitHub:</strong>
+                <a href="{{ profile.github }}" target="_blank" rel="noopener">{{ profile.github }}</a></li>
+        </ul>
+    </section>
+
+    <section class="col-lg-7">
+        <h2 class="h4">Надіслати повідомлення</h2>
+
+        {% if sent %}
+        <div class="alert alert-success" role="alert">
+            Дякуємо{% if sender %}, {{ sender }}{% endif %}! Повідомлення прийнято (форма-заглушка: реальна відправка не виконується).
+        </div>
+        {% endif %}
+
+        <form method="post" action="{{ url_for('contacts') }}">
+            <div class="mb-3">
+                <label for="name" class="form-label">Ім'я</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+            <div class="mb-3">
+                <label for="email" class="form-label">E-mail</label>
+                <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+            <div class="mb-3">
+                <label for="message" class="form-label">Повідомлення</label>
+                <textarea class="form-control" id="message" name="message" rows="5" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Надіслати</button>
+        </form>
+    </section>
+</div>
+{% endblock %}
