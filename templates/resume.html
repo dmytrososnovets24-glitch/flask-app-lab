@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row g-4">
+    <aside class="col-lg-4 text-center">
+        <img src="{{ url_for('static', filename='images/photo.svg') }}"
+             alt="Фото: {{ profile.name }}" class="profile-photo img-fluid rounded-circle shadow mb-3">
+        <h2 class="h4">{{ profile.name }}</h2>
+        <p class="text-muted">{{ profile.position }}</p>
+        <ul class="list-unstyled small">
+            <li>E-mail: <a href="mailto:{{ profile.email }}">{{ profile.email }}</a></li>
+            <li>GitHub: <a href="{{ profile.github }}" target="_blank" rel="noopener">dmytrososnovets24-glitch</a></li>
+        </ul>
+    </aside>
+
+    <div class="col-lg-8">
+        <section id="about" class="resume-section">
+            <h2>Про себе</h2>
+            <p>Студент, який вивчає веб-розробку. Працюю з PHP та Python, зараз освоюю фреймворк Flask:
+               маршрутизацію, шаблони Jinja2 та розгортання застосунків у хмарі. Люблю структурований код,
+               систему контролю версій та доводити роботу до працюючого результату.</p>
+        </section>
+
+        <section id="education" class="resume-section">
+            <h2>Освіта</h2>
+            <ul class="list-unstyled">
+                <li><strong>Вищий навчальний заклад</strong> — спеціальність «Комп'ютерні науки / інформаційні технології»,
+                    бакалаврат (2024 – теперішній час).</li>
+                <li>Курс «Веб-програмування»: PHP, Flask, HTML/CSS, робота з Git.</li>
+            </ul>
+        </section>
+
+        <section id="skills" class="resume-section">
+            <h2>Навички</h2>
+            <ul>
+                <li>Розробка серверної частини вебзастосунків</li>
+                <li>Верстка адаптивних сторінок</li>
+                <li>Робота з Git та GitHub (гілки, коміти)</li>
+                <li>Розгортання застосунків на Render</li>
+                <li>Командна робота та самоорганізація</li>
+            </ul>
+        </section>
+
+        <section id="technologies" class="resume-section">
+            <h2>Технології</h2>
+            <p>
+                {% for tech in ['Python', 'Flask', 'Jinja2', 'PHP', 'HTML5', 'CSS3', 'Bootstrap', 'Git', 'GitHub', 'Render'] %}
+                <span class="badge text-bg-primary tech-badge">{{ tech }}</span>
+                {% endfor %}
+            </p>
+        </section>
+
+        <section id="projects" class="resume-section">
+            <h2>Досвід роботи (проекти)</h2>
+            <article class="mb-3">
+                <h3 class="h5">Flask-додаток на Render</h3>
+                <p class="mb-1">Простий вебзастосунок на Flask, розгорнутий у хмарі за допомогою gunicorn.</p>
+                <a href="https://github.com/dmytrososnovets24-glitch/flask-app-lab" target="_blank" rel="noopener">Код на GitHub</a>
+            </article>
+            <article>
+                <h3 class="h5">Навчальні лабораторні з PHP</h3>
+                <p class="mb-0">Серія лабораторних робіт з веброзробки на PHP: форми, функції, робота з даними.</p>
+            </article>
+        </section>
+    </div>
+</div>
+{% endblock %}
