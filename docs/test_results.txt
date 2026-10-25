@@ -1,0 +1,20 @@
+test_every_product_has_detail_page (test_products_bp.ProductsBlueprintTestCase.test_every_product_has_detail_page) ... ok
+test_non_integer_id_returns_404 (test_products_bp.ProductsBlueprintTestCase.test_non_integer_id_returns_404) ... ok
+test_product_detail (test_products_bp.ProductsBlueprintTestCase.test_product_detail)
+Сторінка /products/<id> показує опис і ціну товару. ... ok
+test_product_list (test_products_bp.ProductsBlueprintTestCase.test_product_list)
+Сторінка /products/ показує всі товари. ... ok
+test_unknown_product_returns_404 (test_products_bp.ProductsBlueprintTestCase.test_unknown_product_returns_404) ... ok
+test_admin_page (test_user_bp.FlaskAppTestCase.test_admin_page)
+Тест маршруту /users/admin, який перенаправляє. ... ok
+test_admin_redirects (test_user_bp.FlaskAppTestCase.test_admin_redirects)
+Маршрут /users/admin повертає 302 на сторінку привітання. ... ok
+test_greetings_page (test_user_bp.FlaskAppTestCase.test_greetings_page)
+Тест маршруту /users/hi/<name>. ... ok
+test_greetings_without_age (test_user_bp.FlaskAppTestCase.test_greetings_without_age)
+Без параметра age сторінка все одно відкривається. ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.062s
+
+OK
