@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<article class="resume-section">
+    <h2>{{ product.name }}</h2>
+    <p>{{ product.content }}</p>
+    <p class="fs-4 fw-bold">Ціна: ${{ product.price }}</p>
+    <a class="btn btn-outline-primary" href="{{ url_for('products.product_list') }}">&larr; До списку товарів</a>
+</article>
+{% endblock %}

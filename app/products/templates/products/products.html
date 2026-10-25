@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row g-4">
+    {% for product in products %}
+    <div class="col-md-6 col-lg-4">
+        <article class="card h-100 shadow-sm">
+            <div class="card-body d-flex flex-column">
+                <h2 class="h5 card-title">{{ product.name }}</h2>
+                <p class="card-text flex-grow-1">{{ product.content }}</p>
+                <p class="fw-bold mb-3">${{ product.price }}</p>
+                <a class="btn btn-primary" href="{{ url_for('products.product_detail', product_id=product.id) }}">Детальніше</a>
+            </div>
+        </article>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
