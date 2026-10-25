@@ -1,6 +1,6 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
     <div class="container">
-        <a class="navbar-brand" href="{{ url_for('resume') }}">{{ profile.name.split()[1] }} {{ profile.name.split()[0] }}</a>
+        <a class="navbar-brand" href="{{ url_for('home') }}">{{ profile.name.split()[1] }} {{ profile.name.split()[0] }}</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                 data-bs-target="#mainMenu" aria-controls="mainMenu"
                 aria-expanded="false" aria-label="Відкрити меню">
@@ -8,6 +8,10 @@
         </button>
         <div class="collapse navbar-collapse" id="mainMenu">
             <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'home' %}active{% endif %}"
+                       href="{{ url_for('home') }}">Головна</a>
+                </li>
                 <li class="nav-item">
                     <a class="nav-link {% if request.endpoint == 'resume' %}active{% endif %}"
                        href="{{ url_for('resume') }}">Резюме</a>

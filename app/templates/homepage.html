@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="resume-section text-center">
+    <h2>Ласкаво просимо!</h2>
+    <p class="lead mb-1">Це навчальний вебсайт студента — {{ profile.name }}.</p>
+    <p class="text-muted">{{ profile.position }}</p>
+    <div class="d-flex flex-wrap justify-content-center gap-2 mt-3">
+        <a class="btn btn-primary" href="{{ url_for('resume') }}">Резюме</a>
+        <a class="btn btn-outline-primary" href="{{ url_for('contacts') }}">Контакти</a>
+    </div>
+</section>
+{% endblock %}

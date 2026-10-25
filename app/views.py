@@ -1,6 +1,6 @@
-from flask import Flask, render_template, request
+from flask import render_template, request
 
-app = Flask(__name__)
+from . import app
 
 PROFILE = {
     'name': 'Сосновець Дмитро Сергійович',
@@ -10,19 +10,23 @@ PROFILE = {
 }
 
 
+@app.context_processor
+def inject_profile():
+    return {'profile': PROFILE}
+
+
 @app.route('/')
+def home():
+    return render_template('homepage.html', title='Головна')
+
+
 @app.route('/resume')
 def resume():
-    return render_template('resume.html', title='Резюме', profile=PROFILE)
+    return render_template('resume.html', title='Резюме')
 
 
 @app.route('/contacts', methods=['GET', 'POST'])
 def contacts():
     sent = request.method == 'POST'
     sender = request.form.get('name', '') if sent else ''
-    return render_template('contacts.html', title='Контакти', profile=PROFILE,
-                           sent=sent, sender=sender)
-
-
-if __name__ == '__main__':
-    app.run(debug=True)
+    return render_template('contacts.html', title='Контакти', sent=sent, sender=sender)
