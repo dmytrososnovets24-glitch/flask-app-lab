@@ -4,3 +4,6 @@ app = Flask(__name__)
 app.config.from_object('config.Config')
 
 from . import views
+from .users import users_bp
+
+app.register_blueprint(users_bp, url_prefix='/users')

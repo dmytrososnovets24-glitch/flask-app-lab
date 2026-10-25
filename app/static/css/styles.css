@@ -56,3 +56,12 @@ body {
         padding: 1rem;
     }
 }
+
+.side-menu .list-group-item.active {
+    background-color: var(--accent);
+    border-color: var(--accent);
+}
+
+.side-menu .list-group-item {
+    transition: background-color 0.15s ease;
+}

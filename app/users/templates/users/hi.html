@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row g-4">
+    <aside class="col-md-3">
+        <nav class="list-group side-menu" aria-label="Меню розділу">
+            <a class="list-group-item list-group-item-action active"
+               href="{{ url_for('users.greetings', name='John') }}">Привітати John</a>
+            <a class="list-group-item list-group-item-action"
+               href="{{ url_for('users.greetings', name='Anna', age=21) }}">Привітати Anna</a>
+            <a class="list-group-item list-group-item-action"
+               href="{{ url_for('users.admin') }}">Адміністратор (редірект)</a>
+            <a class="list-group-item list-group-item-action"
+               href="{{ url_for('home') }}">На головну</a>
+        </nav>
+    </aside>
+
+    <section class="col-md-9">
+        <div class="resume-section">
+            <h2>Привіт, {{ name }}!</h2>
+            {% if age is not none %}
+            <p class="lead mb-0">Ваш вік: <strong>{{ age }}</strong></p>
+            {% else %}
+            <p class="text-muted mb-0">Вік не вказано. Додайте параметр <code>?age=25</code> до адреси.</p>
+            {% endif %}
+        </div>
+    </section>
+</div>
+{% endblock %}
