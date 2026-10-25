@@ -1,0 +1,37 @@
+test_login_page_opens (test_auth_cookies.AuthTestCase.test_login_page_opens) ... ok
+test_login_success (test_auth_cookies.AuthTestCase.test_login_success) ... ok
+test_login_wrong_password (test_auth_cookies.AuthTestCase.test_login_wrong_password) ... ok
+test_logout (test_auth_cookies.AuthTestCase.test_logout) ... ok
+test_profile_redirect_shows_flash (test_auth_cookies.AuthTestCase.test_profile_redirect_shows_flash) ... ok
+test_profile_requires_login (test_auth_cookies.AuthTestCase.test_profile_requires_login) ... ok
+test_add_cookie_invalid_key (test_auth_cookies.CookiesAndThemeTestCase.test_add_cookie_invalid_key) ... ok
+test_add_cookie_invalid_max_age (test_auth_cookies.CookiesAndThemeTestCase.test_add_cookie_invalid_max_age) ... ok
+test_add_cookie_shows_in_table (test_auth_cookies.CookiesAndThemeTestCase.test_add_cookie_shows_in_table) ... ok
+test_cannot_overwrite_session_cookie (test_auth_cookies.CookiesAndThemeTestCase.test_cannot_overwrite_session_cookie) ... ok
+test_delete_all_keeps_session (test_auth_cookies.CookiesAndThemeTestCase.test_delete_all_keeps_session) ... ok
+test_delete_cookie (test_auth_cookies.CookiesAndThemeTestCase.test_delete_cookie) ... ok
+test_delete_missing_cookie (test_auth_cookies.CookiesAndThemeTestCase.test_delete_missing_cookie) ... ok
+test_theme_can_switch_back (test_auth_cookies.CookiesAndThemeTestCase.test_theme_can_switch_back) ... ok
+test_theme_dark_is_saved (test_auth_cookies.CookiesAndThemeTestCase.test_theme_dark_is_saved) ... ok
+test_theme_default_is_light (test_auth_cookies.CookiesAndThemeTestCase.test_theme_default_is_light) ... ok
+test_unknown_theme (test_auth_cookies.CookiesAndThemeTestCase.test_unknown_theme) ... ok
+test_every_product_has_detail_page (test_products_bp.ProductsBlueprintTestCase.test_every_product_has_detail_page) ... ok
+test_non_integer_id_returns_404 (test_products_bp.ProductsBlueprintTestCase.test_non_integer_id_returns_404) ... ok
+test_product_detail (test_products_bp.ProductsBlueprintTestCase.test_product_detail)
+Сторінка /products/<id> показує опис і ціну товару. ... ok
+test_product_list (test_products_bp.ProductsBlueprintTestCase.test_product_list)
+Сторінка /products/ показує всі товари. ... ok
+test_unknown_product_returns_404 (test_products_bp.ProductsBlueprintTestCase.test_unknown_product_returns_404) ... ok
+test_admin_page (test_user_bp.FlaskAppTestCase.test_admin_page)
+Тест маршруту /users/admin, який перенаправляє. ... ok
+test_admin_redirects (test_user_bp.FlaskAppTestCase.test_admin_redirects)
+Маршрут /users/admin повертає 302 на сторінку привітання. ... ok
+test_greetings_page (test_user_bp.FlaskAppTestCase.test_greetings_page)
+Тест маршруту /users/hi/<name>. ... ok
+test_greetings_without_age (test_user_bp.FlaskAppTestCase.test_greetings_without_age)
+Без параметра age сторінка все одно відкривається. ... ok
+
+----------------------------------------------------------------------
+Ran 26 tests in 0.084s
+
+OK
