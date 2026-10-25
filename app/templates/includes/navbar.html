@@ -31,6 +31,20 @@
                     <a class="nav-link {% if request.endpoint == 'contacts' %}active{% endif %}"
                        href="{{ url_for('contacts') }}">Контакти</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'users.profile' %}active{% endif %}"
+                       href="{{ url_for('users.profile') }}">Профіль</a>
+                </li>
+                {% if session.get('user') %}
+                <li class="nav-item">
+                    <span class="navbar-text ms-lg-2">Ви увійшли як <strong>{{ session['user'] }}</strong></span>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'users.login' %}active{% endif %}"
+                       href="{{ url_for('users.login') }}">Вхід</a>
+                </li>
+                {% endif %}
             </ul>
         </div>
     </div>
