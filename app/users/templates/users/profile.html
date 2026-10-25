@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block extra_head %}
+{% if theme == 'dark' %}
+<style>
+    body.theme-dark { background-color: #14161c; color: #e6e8ee; }
+    body.theme-dark .resume-section { background: #1f2330; color: #e6e8ee; border-left-color: #748ffc; }
+    body.theme-dark .resume-section h2 { color: #91a7ff; }
+    body.theme-dark .table { --bs-table-bg: transparent; --bs-table-color: #e6e8ee; --bs-table-border-color: #3a4052; }
+    body.theme-dark .form-control { background-color: #14161c; color: #e6e8ee; border-color: #3a4052; }
+    body.theme-dark .form-label, body.theme-dark .text-muted { color: #b8bdcc !important; }
+</style>
+{% else %}
+<style>
+    body.theme-light { background-color: #f5f6fa; color: #212529; }
+</style>
+{% endif %}
+{% endblock %}
+
+{% block body_class %}theme-{{ theme }}{% endblock %}
+
+{% block content %}
+<section class="resume-section">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <h2 class="mb-0">Привіт, {{ user }}!</h2>
+        <form method="post" action="{{ url_for('users.logout') }}">
+            <button type="submit" class="btn btn-outline-danger">Вийти</button>
+        </form>
+    </div>
+</section>
+
+<section class="resume-section">
+    <h2>Кольорова схема</h2>
+    <p class="text-muted">Поточна схема: <strong>{{ 'темна' if theme == 'dark' else 'світла' }}</strong>.
+        Вибір зберігається в кукі на 30 днів.</p>
+    <div class="btn-group" role="group" aria-label="Вибір кольорової схеми">
+        <a class="btn {{ 'btn-primary' if theme == 'light' else 'btn-outline-primary' }}"
+           href="{{ url_for('users.set_theme', scheme='light') }}">Світла</a>
+        <a class="btn {{ 'btn-primary' if theme == 'dark' else 'btn-outline-primary' }}"
+           href="{{ url_for('users.set_theme', scheme='dark') }}">Темна</a>
+    </div>
+</section>
+
+<section class="resume-section">
+    <h2>Додати кукі</h2>
+    <form method="post" action="{{ url_for('users.add_cookie') }}" class="row g-3">
+        <div class="col-md-4">
+            <label for="key" class="form-label">Ключ</label>
+            <input type="text" class="form-control" id="key" name="key" maxlength="50" required>
+        </div>
+        <div class="col-md-4">
+            <label for="value" class="form-label">Значення</label>
+            <input type="text" class="form-control" id="value" name="value">
+        </div>
+        <div class="col-md-2">
+            <label for="max_age" class="form-label">Термін (с)</label>
+            <input type="number" class="form-control" id="max_age" name="max_age" min="1" value="3600" required>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">Додати</button>
+        </div>
+    </form>
+</section>
+
+<section class="resume-section">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h2 class="mb-0">Поточні кукі</h2>
+        <form method="post" action="{{ url_for('users.delete_all_cookies') }}">
+            <button type="submit" class="btn btn-sm btn-outline-danger">Видалити всі</button>
+        </form>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm align-middle cookies-table">
+            <thead>
+                <tr><th>Ключ</th><th>Значення</th><th class="text-end">Дія</th></tr>
+            </thead>
+            <tbody>
+                {% for key, value in cookies.items() %}
+                <tr>
+                    <td>{{ key }}</td>
+                    <td class="cookie-value">{{ value }}</td>
+                    <td class="text-end">
+                        {% if key in protected %}
+                        <span class="text-muted small">службове</span>
+                        {% else %}
+                        <form method="post" action="{{ url_for('users.delete_cookie') }}" class="d-inline">
+                            <input type="hidden" name="key" value="{{ key }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Видалити</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="3" class="text-muted">Кукі відсутні.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

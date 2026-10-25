@@ -65,3 +65,12 @@ body {
 .side-menu .list-group-item {
     transition: background-color 0.15s ease;
 }
+
+.cookie-value {
+    word-break: break-all;
+    max-width: 420px;
+}
+
+.flash-messages {
+    margin-bottom: 1rem;
+}
