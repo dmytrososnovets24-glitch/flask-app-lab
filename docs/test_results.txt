@@ -93,6 +93,6 @@ test_greetings_without_age (test_user_bp.FlaskAppTestCase.test_greetings_without
 Без параметра age сторінка все одно відкривається. ... ok
 
 ----------------------------------------------------------------------
-Ran 89 tests in 1.012s
+Ran 89 tests in 0.760s
 
 OK

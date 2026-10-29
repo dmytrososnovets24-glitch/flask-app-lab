@@ -226,7 +226,7 @@ class ProductsReadTests(ProductsTestBase):
     def test_detail_not_found(self):
         response = self.client.get("/product/999")
         self.assertEqual(response.status_code, 404)
-        self.assertIn("не знайдено".encode(), response.data)
+        self.assertIn("Товар з id 999 не знайдено".encode(), response.data)
 
     def test_non_integer_id_not_found(self):
         self.assertEqual(self.client.get("/product/abc").status_code, 404)
