@@ -1,4 +1,5 @@
 from flask import current_app, flash, redirect, render_template, url_for
+from werkzeug.exceptions import NotFound
 
 from . import app
 from .contact_log import log_contact_message
@@ -50,7 +51,9 @@ def contacts():
 
 @app.errorhandler(404)
 def page_not_found(error):
-    return render_template('404.html', title='Сторінку не знайдено'), 404
+    # власний опис (abort(404, description=...)) показуємо, стандартний англійський — ні
+    message = None if error.description == NotFound.description else error.description
+    return render_template('404.html', title='Сторінку не знайдено', message=message), 404
 
 
 @app.errorhandler(413)
