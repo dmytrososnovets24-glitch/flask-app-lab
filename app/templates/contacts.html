@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% from 'macros/forms.html' import render_field %}
 
 {% block content %}
 <div class="row g-4">
@@ -15,26 +16,19 @@
     <section class="col-lg-7">
         <h2 class="h4">Надіслати повідомлення</h2>
 
-        {% if sent %}
-        <div class="alert alert-success" role="alert">
-            Дякуємо{% if sender %}, {{ sender }}{% endif %}! Повідомлення прийнято (форма-заглушка: реальна відправка не виконується).
-        </div>
-        {% endif %}
-
-        <form method="post" action="{{ url_for('contacts') }}">
-            <div class="mb-3">
-                <label for="name" class="form-label">Ім'я</label>
-                <input type="text" class="form-control" id="name" name="name" required>
+        <form method="post" action="{{ url_for('contacts') }}" novalidate>
+            {{ form.hidden_tag() }}
+            {% if form.errors.get('csrf_token') %}
+            <div class="alert alert-danger" role="alert">
+                Захист від CSRF: {{ form.errors['csrf_token'] | join(' ') }} Оновіть сторінку й спробуйте ще раз.
             </div>
-            <div class="mb-3">
-                <label for="email" class="form-label">E-mail</label>
-                <input type="email" class="form-control" id="email" name="email" required>
-            </div>
-            <div class="mb-3">
-                <label for="message" class="form-label">Повідомлення</label>
-                <textarea class="form-control" id="message" name="message" rows="5" required></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary">Надіслати</button>
+            {% endif %}
+            {{ render_field(form.name) }}
+            {{ render_field(form.email) }}
+            {{ render_field(form.phone) }}
+            {{ render_field(form.subject) }}
+            {{ render_field(form.message) }}
+            {{ form.submit(class='btn btn-primary') }}
         </form>
     </section>
 </div>
