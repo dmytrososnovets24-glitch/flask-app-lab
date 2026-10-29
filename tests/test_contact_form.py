@@ -131,7 +131,8 @@ class ContactFormTestCase(unittest.TestCase):
         # робимо з "blocked.txt" файл, щоб створити каталог всередині було неможливо
         with open(os.path.join(self._tmp.name, "blocked.txt"), "w") as fh:
             fh.write("file")
-        response = self.client.post("/contacts", data=VALID, follow_redirects=True)
+        with self.assertLogs(app.logger, level="ERROR"):
+            response = self.client.post("/contacts", data=VALID, follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn("Не вдалося зберегти".encode(), response.data)
 
