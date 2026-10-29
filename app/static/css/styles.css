@@ -74,3 +74,21 @@ body {
 .flash-messages {
     margin-bottom: 1rem;
 }
+
+.product-thumb {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
+.product-image {
+    max-height: 320px;
+    object-fit: contain;
+    background: #fff;
+}
+
+.products-table th {
+    white-space: nowrap;
+}
