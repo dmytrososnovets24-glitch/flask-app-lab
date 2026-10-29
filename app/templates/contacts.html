@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% from 'macros/forms.html' import render_field %}
+
+{% block content %}
+<div class="row g-4">
+    <section class="col-lg-5">
+        <h2 class="h4">Контактні дані</h2>
+        <ul class="list-unstyled">
+            <li class="mb-2"><strong>Ім'я:</strong> {{ profile.name }}</li>
+            <li class="mb-2"><strong>E-mail:</strong> <a href="mailto:{{ profile.email }}">{{ profile.email }}</a></li>
+            <li class="mb-2"><strong>GitHub:</strong>
+                <a href="{{ profile.github }}" target="_blank" rel="noopener">{{ profile.github }}</a></li>
+        </ul>
+    </section>
+
+    <section class="col-lg-7">
+        <h2 class="h4">Надіслати повідомлення</h2>
+
+        <form method="post" action="{{ url_for('contacts') }}" novalidate>
+            {{ form.hidden_tag() }}
+            {% if form.errors.get('csrf_token') %}
+            <div class="alert alert-danger" role="alert">
+                Захист від CSRF: {{ form.errors['csrf_token'] | join(' ') }} Оновіть сторінку й спробуйте ще раз.
+            </div>
+            {% endif %}
+            {{ render_field(form.name) }}
+            {{ render_field(form.email) }}
+            {{ render_field(form.phone) }}
+            {{ render_field(form.subject) }}
+            {{ render_field(form.message) }}
+            {{ form.submit(class='btn btn-primary') }}
+        </form>
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% from 'macros/forms.html' import render_field %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <section class="col-lg-8">
+        <div class="resume-section">
+            <form method="post" enctype="multipart/form-data" novalidate
+                  action="{{ url_for('products.edit_product', product_id=product.id) if product else url_for('products.add_product') }}">
+                {{ form.hidden_tag() }}
+                {% if form.errors.get('csrf_token') %}
+                <div class="alert alert-danger" role="alert">
+                    Захист від CSRF: {{ form.errors['csrf_token'] | join(' ') }} Оновіть сторінку й спробуйте ще раз.
+                </div>
+                {% endif %}
+
+                {{ render_field(form.name) }}
+                {{ render_field(form.content) }}
+                <div class="row">
+                    <div class="col-md-4">{{ render_field(form.price) }}</div>
+                    <div class="col-md-4">{{ render_field(form.category) }}</div>
+                    <div class="col-md-4">{{ render_field(form.quantity) }}</div>
+                </div>
+
+                {% if product and product.image %}
+                <div class="mb-2">
+                    <span class="form-label d-block">Поточне зображення</span>
+                    <img class="product-thumb" src="{{ product_image_url(product) }}" alt="{{ product.name }}">
+                    <small class="text-muted ms-2">Оберіть новий файл, щоб замінити, або залиште поле порожнім.</small>
+                </div>
+                {% endif %}
+                {{ render_field(form.image) }}
+
+                <div class="d-flex gap-2">
+                    {{ form.submit(class='btn btn-primary') }}
+                    <a class="btn btn-outline-secondary"
+                       href="{{ url_for('products.product_detail', product_id=product.id) if product else url_for('products.product_list') }}">Скасувати</a>
+                </div>
+            </form>
+        </div>
+    </section>
+</div>
+{% endblock %}

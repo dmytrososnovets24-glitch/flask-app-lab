@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="resume-section text-center">
+    <h2>{{ title }}</h2>
+    <p class="lead">{{ message or 'Запитану сторінку або ресурс не знайдено.' }}</p>
+    <a class="btn btn-primary" href="{{ url_for('home') }}">На головну</a>
+    <a class="btn btn-outline-primary" href="{{ url_for('products.product_list') }}">До списку товарів</a>
+</section>
+{% endblock %}

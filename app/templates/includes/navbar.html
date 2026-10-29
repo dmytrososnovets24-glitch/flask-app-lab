@@ -1,6 +1,6 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
     <div class="container">
-        <a class="navbar-brand" href="{{ url_for('resume') }}">{{ profile.name.split()[1] }} {{ profile.name.split()[0] }}</a>
+        <a class="navbar-brand" href="{{ url_for('home') }}">{{ profile.name.split()[1] }} {{ profile.name.split()[0] }}</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                 data-bs-target="#mainMenu" aria-controls="mainMenu"
                 aria-expanded="false" aria-label="Відкрити меню">
@@ -8,6 +8,10 @@
         </button>
         <div class="collapse navbar-collapse" id="mainMenu">
             <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'home' %}active{% endif %}"
+                       href="{{ url_for('home') }}">Головна</a>
+                </li>
                 <li class="nav-item">
                     <a class="nav-link {% if request.endpoint == 'resume' %}active{% endif %}"
                        href="{{ url_for('resume') }}">Резюме</a>
@@ -20,9 +24,27 @@
                 <li class="nav-item"><a class="nav-link" href="#projects">Проекти</a></li>
                 {% endif %}
                 <li class="nav-item">
+                    <a class="nav-link {% if request.blueprint == 'products' %}active{% endif %}"
+                       href="{{ url_for('products.product_list') }}">Товари</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link {% if request.endpoint == 'contacts' %}active{% endif %}"
                        href="{{ url_for('contacts') }}">Контакти</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'users.profile' %}active{% endif %}"
+                       href="{{ url_for('users.profile') }}">Профіль</a>
+                </li>
+                {% if session.get('user') %}
+                <li class="nav-item">
+                    <span class="navbar-text ms-lg-2">Ви увійшли як <strong>{{ session['user'] }}</strong></span>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'users.login' %}active{% endif %}"
+                       href="{{ url_for('users.login') }}">Вхід</a>
+                </li>
+                {% endif %}
             </ul>
         </div>
     </div>
