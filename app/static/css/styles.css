@@ -56,3 +56,39 @@ body {
         padding: 1rem;
     }
 }
+
+.side-menu .list-group-item.active {
+    background-color: var(--accent);
+    border-color: var(--accent);
+}
+
+.side-menu .list-group-item {
+    transition: background-color 0.15s ease;
+}
+
+.cookie-value {
+    word-break: break-all;
+    max-width: 420px;
+}
+
+.flash-messages {
+    margin-bottom: 1rem;
+}
+
+.product-thumb {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
+.product-image {
+    max-height: 320px;
+    object-fit: contain;
+    background: #fff;
+}
+
+.products-table th {
+    white-space: nowrap;
+}
