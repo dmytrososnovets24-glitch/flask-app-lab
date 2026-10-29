@@ -15,13 +15,74 @@ test_theme_can_switch_back (test_auth_cookies.CookiesAndThemeTestCase.test_theme
 test_theme_dark_is_saved (test_auth_cookies.CookiesAndThemeTestCase.test_theme_dark_is_saved) ... ok
 test_theme_default_is_light (test_auth_cookies.CookiesAndThemeTestCase.test_theme_default_is_light) ... ok
 test_unknown_theme (test_auth_cookies.CookiesAndThemeTestCase.test_unknown_theme) ... ok
-test_every_product_has_detail_page (test_products_bp.ProductsBlueprintTestCase.test_every_product_has_detail_page) ... ok
-test_non_integer_id_returns_404 (test_products_bp.ProductsBlueprintTestCase.test_non_integer_id_returns_404) ... ok
-test_product_detail (test_products_bp.ProductsBlueprintTestCase.test_product_detail)
-Сторінка /products/<id> показує опис і ціну товару. ... ok
-test_product_list (test_products_bp.ProductsBlueprintTestCase.test_product_list)
-Сторінка /products/ показує всі товари. ... ok
-test_unknown_product_returns_404 (test_products_bp.ProductsBlueprintTestCase.test_unknown_product_returns_404) ... ok
+test_form_contains_csrf_token (test_contact_form.ContactCsrfTestCase.test_form_contains_csrf_token) ... ok
+test_post_without_token_is_rejected (test_contact_form.ContactCsrfTestCase.test_post_without_token_is_rejected) ... ok
+test_error_flash_shown_on_invalid_submit (test_contact_form.ContactFormTestCase.test_error_flash_shown_on_invalid_submit) ... ok
+test_form_renders_all_fields (test_contact_form.ContactFormTestCase.test_form_renders_all_fields) ... ok
+test_invalid_email (test_contact_form.ContactFormTestCase.test_invalid_email) ... ok
+test_log_appends_each_submission (test_contact_form.ContactFormTestCase.test_log_appends_each_submission) ... ok
+test_log_failure_flashes_error (test_contact_form.ContactFormTestCase.test_log_failure_flashes_error) ... ok
+test_message_500_is_valid (test_contact_form.ContactFormTestCase.test_message_500_is_valid) ... ok
+test_message_required (test_contact_form.ContactFormTestCase.test_message_required) ... ok
+test_message_too_long (test_contact_form.ContactFormTestCase.test_message_too_long) ... ok
+test_multiline_message_is_single_log_line (test_contact_form.ContactFormTestCase.test_multiline_message_is_single_log_line) ... ok
+test_name_boundaries_are_valid (test_contact_form.ContactFormTestCase.test_name_boundaries_are_valid) ... ok
+test_name_too_long (test_contact_form.ContactFormTestCase.test_name_too_long) ... ok
+test_name_too_short (test_contact_form.ContactFormTestCase.test_name_too_short) ... ok
+test_phone_wrong_format (test_contact_form.ContactFormTestCase.test_phone_wrong_format) ... ok
+test_subject_must_be_from_list (test_contact_form.ContactFormTestCase.test_subject_must_be_from_list) ... ok
+test_subject_required (test_contact_form.ContactFormTestCase.test_subject_required) ... ok
+test_valid_post_redirects_logs_and_flashes (test_contact_form.ContactFormTestCase.test_valid_post_redirects_logs_and_flashes) ... ok
+test_add_form_renders (test_products_bp.ProductsCreateTests.test_add_form_renders) ... ok
+test_add_sets_id_and_created_at_automatically (test_products_bp.ProductsCreateTests.test_add_sets_id_and_created_at_automatically) ... ok
+test_add_valid_redirects_to_detail_prg (test_products_bp.ProductsCreateTests.test_add_valid_redirects_to_detail_prg) ... ok
+test_add_with_jpeg_image (test_products_bp.ProductsCreateTests.test_add_with_jpeg_image) ... ok
+test_add_with_png_image (test_products_bp.ProductsCreateTests.test_add_with_png_image) ... ok
+test_category_must_be_from_list (test_products_bp.ProductsCreateTests.test_category_must_be_from_list) ... ok
+test_content_required (test_products_bp.ProductsCreateTests.test_content_required) ... ok
+test_data_saved_to_json_file_and_survives_restart (test_products_bp.ProductsCreateTests.test_data_saved_to_json_file_and_survives_restart) ... ok
+test_empty_list (test_products_bp.ProductsCreateTests.test_empty_list) ... ok
+test_image_content_must_match_extension (test_products_bp.ProductsCreateTests.test_image_content_must_match_extension) ... ok
+test_image_too_large (test_products_bp.ProductsCreateTests.test_image_too_large) ... ok
+test_image_wrong_extension (test_products_bp.ProductsCreateTests.test_image_wrong_extension) ... ok
+test_invalid_submit_shows_error_flash (test_products_bp.ProductsCreateTests.test_invalid_submit_shows_error_flash) ... ok
+test_name_required (test_products_bp.ProductsCreateTests.test_name_required) ... ok
+test_name_too_short (test_products_bp.ProductsCreateTests.test_name_too_short) ... ok
+test_price_accepts_one_and_two_decimals (test_products_bp.ProductsCreateTests.test_price_accepts_one_and_two_decimals) ... ok
+test_price_max_two_decimals (test_products_bp.ProductsCreateTests.test_price_max_two_decimals) ... ok
+test_price_must_be_positive (test_products_bp.ProductsCreateTests.test_price_must_be_positive) ... ok
+test_price_required_and_numeric (test_products_bp.ProductsCreateTests.test_price_required_and_numeric) ... ok
+test_quantity_must_be_integer (test_products_bp.ProductsCreateTests.test_quantity_must_be_integer) ... ok
+test_quantity_must_not_be_negative (test_products_bp.ProductsCreateTests.test_quantity_must_not_be_negative) ... ok
+test_quantity_zero_is_valid (test_products_bp.ProductsCreateTests.test_quantity_zero_is_valid) ... ok
+test_uploaded_filename_is_not_user_controlled (test_products_bp.ProductsCreateTests.test_uploaded_filename_is_not_user_controlled) ... ok
+test_add_without_token_rejected (test_products_bp.ProductsCsrfTests.test_add_without_token_rejected) ... ok
+test_delete_without_token_rejected (test_products_bp.ProductsCsrfTests.test_delete_without_token_rejected) ... ok
+test_forms_contain_csrf_token (test_products_bp.ProductsCsrfTests.test_forms_contain_csrf_token) ... ok
+test_delete_buttons_have_confirmation (test_products_bp.ProductsDeleteTests.test_delete_buttons_have_confirmation) ... ok
+test_delete_not_found (test_products_bp.ProductsDeleteTests.test_delete_not_found) ... ok
+test_delete_only_selected_product (test_products_bp.ProductsDeleteTests.test_delete_only_selected_product) ... ok
+test_delete_removes_image_file (test_products_bp.ProductsDeleteTests.test_delete_removes_image_file) ... ok
+test_delete_removes_product_and_redirects (test_products_bp.ProductsDeleteTests.test_delete_removes_product_and_redirects) ... ok
+test_delete_requires_post (test_products_bp.ProductsDeleteTests.test_delete_requires_post) ... ok
+test_ids_are_unique_after_delete (test_products_bp.ProductsDeleteTests.test_ids_are_unique_after_delete) ... ok
+test_detail_not_found (test_products_bp.ProductsReadTests.test_detail_not_found) ... ok
+test_detail_shows_full_info (test_products_bp.ProductsReadTests.test_detail_shows_full_info) ... ok
+test_detail_with_missing_image_file_uses_placeholder (test_products_bp.ProductsReadTests.test_detail_with_missing_image_file_uses_placeholder) ... ok
+test_html_in_name_is_escaped (test_products_bp.ProductsReadTests.test_html_in_name_is_escaped) ... ok
+test_list_shows_all_fields (test_products_bp.ProductsReadTests.test_list_shows_all_fields) ... ok
+test_list_sorted_by_id (test_products_bp.ProductsReadTests.test_list_sorted_by_id) ... ok
+test_list_without_image_uses_placeholder (test_products_bp.ProductsReadTests.test_list_without_image_uses_placeholder) ... ok
+test_non_integer_id_not_found (test_products_bp.ProductsReadTests.test_non_integer_id_not_found) ... ok
+test_fresh_storage_is_seeded (test_products_bp.ProductsSeedTests.test_fresh_storage_is_seeded) ... ok
+test_seed_runs_only_once (test_products_bp.ProductsSeedTests.test_seed_runs_only_once) ... ok
+test_edit_form_prefilled (test_products_bp.ProductsUpdateTests.test_edit_form_prefilled) ... ok
+test_edit_invalid_does_not_change_data (test_products_bp.ProductsUpdateTests.test_edit_invalid_does_not_change_data) ... ok
+test_edit_invalid_image_keeps_old_one (test_products_bp.ProductsUpdateTests.test_edit_invalid_image_keeps_old_one) ... ok
+test_edit_not_found (test_products_bp.ProductsUpdateTests.test_edit_not_found) ... ok
+test_edit_updates_fields_but_keeps_id_and_created_at (test_products_bp.ProductsUpdateTests.test_edit_updates_fields_but_keeps_id_and_created_at) ... ok
+test_edit_with_new_image_replaces_and_removes_old_file (test_products_bp.ProductsUpdateTests.test_edit_with_new_image_replaces_and_removes_old_file) ... ok
+test_edit_without_new_image_keeps_old_one (test_products_bp.ProductsUpdateTests.test_edit_without_new_image_keeps_old_one) ... ok
 test_admin_page (test_user_bp.FlaskAppTestCase.test_admin_page)
 Тест маршруту /users/admin, який перенаправляє. ... ok
 test_admin_redirects (test_user_bp.FlaskAppTestCase.test_admin_redirects)
@@ -32,6 +93,6 @@ test_greetings_without_age (test_user_bp.FlaskAppTestCase.test_greetings_without
 Без параметра age сторінка все одно відкривається. ... ok
 
 ----------------------------------------------------------------------
-Ran 26 tests in 0.084s
+Ran 89 tests in 1.012s
 
 OK
