@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="Зображення відсутнє">
+    <rect width="200" height="200" fill="#e9ecef"/>
+    <rect x="45" y="55" width="110" height="90" rx="8" fill="none" stroke="#adb5bd" stroke-width="6"/>
+    <circle cx="80" cy="90" r="10" fill="#adb5bd"/>
+    <path d="M52 138l34-34 22 22 16-16 24 28z" fill="#adb5bd"/>
+    <text x="100" y="175" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#6c757d">немає фото</text>
+</svg>
