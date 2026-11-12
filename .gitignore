@@ -10,3 +10,5 @@ logs/
 data/
 app/products/static/uploads/*
 !app/products/static/uploads/.gitkeep
+
+instance/

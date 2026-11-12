@@ -4,8 +4,10 @@ import os
 import tempfile
 import unittest
 
-from app import app
+from app import create_app
 from app.products import storage
+
+app = create_app("testing")
 
 PNG = b"\x89PNG\r\n\x1a\n" + b"0" * 200
 JPEG = b"\xff\xd8\xff\xe0" + b"0" * 200

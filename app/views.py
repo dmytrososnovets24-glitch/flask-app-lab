@@ -1,9 +1,9 @@
-from flask import current_app, flash, redirect, render_template, url_for
-from werkzeug.exceptions import NotFound
+from flask import Blueprint, current_app, flash, redirect, render_template, url_for
 
-from . import app
 from .contact_log import log_contact_message
 from .forms import ContactForm
+
+main_bp = Blueprint('main', __name__)
 
 PROFILE = {
     'name': 'Сосновець Дмитро Сергійович',
@@ -13,22 +13,22 @@ PROFILE = {
 }
 
 
-@app.context_processor
+@main_bp.app_context_processor
 def inject_profile():
     return {'profile': PROFILE}
 
 
-@app.route('/')
+@main_bp.route('/')
 def home():
     return render_template('homepage.html', title='Головна')
 
 
-@app.route('/resume')
+@main_bp.route('/resume')
 def resume():
     return render_template('resume.html', title='Резюме')
 
 
-@app.route('/contacts', methods=['GET', 'POST'])
+@main_bp.route('/contacts', methods=['GET', 'POST'])
 def contacts():
     form = ContactForm()
 
@@ -41,23 +41,9 @@ def contacts():
         else:
             flash(f'Дякуємо, {form.name.data}! Повідомлення надіслано та збережено.', 'success')
         # Post/Redirect/Get: після обробки форми робимо перенаправлення
-        return redirect(url_for('contacts'))
+        return redirect(url_for('main.contacts'))
 
     if form.is_submitted():
         flash('Форму не надіслано: виправте помилки у виділених полях.', 'error')
 
     return render_template('contacts.html', title='Контакти', form=form)
-
-
-@app.errorhandler(404)
-def page_not_found(error):
-    # власний опис (abort(404, description=...)) показуємо, стандартний англійський — ні
-    message = None if error.description == NotFound.description else error.description
-    return render_template('404.html', title='Сторінку не знайдено', message=message), 404
-
-
-@app.errorhandler(413)
-def payload_too_large(error):
-    flash('Файл завеликий. Максимальний розмір запиту — 5 МБ.', 'error')
-    return render_template('404.html', title='Файл завеликий',
-                           message='Завантажений файл перевищує допустимий розмір.'), 413
