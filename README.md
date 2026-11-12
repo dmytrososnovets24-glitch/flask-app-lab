@@ -44,3 +44,6 @@ python -m unittest discover tests -v       # Ran 9 tests ... OK
 
 **Деталі товару `/products/2`**
 ![Деталі товару](screenshots/lab3/05_product_detail.jpg)
+
+**Виконання модульних тестів у командному рядку (`python -m unittest discover tests -v`)**
+![Тести в командному рядку](screenshots/lab3/06_tests_cli.png)
