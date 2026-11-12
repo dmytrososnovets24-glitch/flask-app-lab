@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block css %}
+<link rel="stylesheet" href="{{ url_for('.static', filename='css/posts.css') }}">
+{% endblock %}
+
+{% block content %}
+<article class="resume-section post-detail">
+    <h2>{{ post.title }}</h2>
+    <p class="post-card__meta">
+        <span class="badge post-badge post-badge--{{ post.category or 'other' }}">{{ post.category | category_label }}</span>
+        <time datetime="{{ post.posted.isoformat() }}">{{ post.posted.strftime('%d.%m.%Y %H:%M') }}</time>
+        <span>Автор: <strong>{{ post.author or 'Anonymous' }}</strong></span>
+        {% if not post.is_active %}<span class="badge text-bg-secondary">неактивний</span>{% endif %}
+    </p>
+    <p class="post-detail__content">{{ post.content }}</p>
+
+    <div class="d-flex flex-wrap gap-2 mt-3">
+        <a class="btn btn-outline-primary" href="{{ url_for('.all_posts') }}">&larr; До постів</a>
+        <a class="btn btn-primary" href="{{ url_for('.update_post', post_id=post.id) }}">Редагувати</a>
+        <a class="btn btn-outline-danger" href="{{ url_for('.delete_post', post_id=post.id) }}">Видалити</a>
+    </div>
+</article>
+{% endblock %}

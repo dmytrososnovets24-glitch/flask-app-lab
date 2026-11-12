@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% from 'macros/form_macros.html' import render_field %}
+
+{% block css %}
+<link rel="stylesheet" href="{{ url_for('.static', filename='css/posts.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <section class="col-lg-8">
+        <div class="resume-section">
+            <form method="post" novalidate
+                  action="{{ url_for('.update_post', post_id=post.id) if post else url_for('.create_post') }}">
+                {{ form.hidden_tag() }}
+                {% if form.errors.get('csrf_token') %}
+                <div class="alert alert-danger" role="alert">
+                    Захист від CSRF: {{ form.errors['csrf_token'] | join(' ') }} Оновіть сторінку й спробуйте ще раз.
+                </div>
+                {% endif %}
+
+                {{ render_field(form.title) }}
+                {{ render_field(form.content) }}
+                {{ render_field(form.is_active) }}
+                <div class="row">
+                    <div class="col-md-6">{{ render_field(form.publish_date) }}</div>
+                    <div class="col-md-6">{{ render_field(form.category) }}</div>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2">
+                    {{ form.submit(class='btn btn-primary') }}
+                    <a class="btn btn-outline-secondary"
+                       href="{{ url_for('.detail_post', post_id=post.id) if post else url_for('.all_posts') }}">Повернутися до постів</a>
+                </div>
+            </form>
+        </div>
+    </section>
+</div>
+{% endblock %}

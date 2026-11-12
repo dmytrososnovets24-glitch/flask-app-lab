@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block css %}
+<link rel="stylesheet" href="{{ url_for('.static', filename='css/posts.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <p class="mb-0 text-muted">Усього постів: <strong>{{ posts | length }}</strong></p>
+    <a class="btn btn-primary" href="{{ url_for('.create_post') }}">+ Додати пост</a>
+</div>
+
+{% if posts %}
+<div class="row g-4">
+    {% for post in posts %}
+    <div class="col-sm-6 col-lg-4 col-xl-3">
+        <article class="card post-card h-100">
+            <img class="card-img-top post-card__img"
+                 src="{{ url_for('.static', filename='img/default.jpg') }}" alt="Зображення поста">
+            <div class="card-body d-flex flex-column">
+                <h2 class="h5 card-title post-card__title">{{ post.title }}</h2>
+                <p class="post-card__meta">
+                    <span class="badge post-badge post-badge--{{ post.category or 'other' }}">{{ post.category | category_label }}</span>
+                    <time datetime="{{ post.posted.isoformat() }}">{{ post.posted.strftime('%d.%m.%Y %H:%M') }}</time>
+                </p>
+                <p class="card-text flex-grow-1">{{ post.content[:100] }}{% if post.content | length > 100 %}…{% endif %}</p>
+                <a class="btn btn-outline-primary btn-sm align-self-start"
+                   href="{{ url_for('.detail_post', post_id=post.id) }}">Переглянути</a>
+            </div>
+        </article>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="resume-section text-center">
+    <p class="lead mb-3">Постів поки немає.</p>
+    <a class="btn btn-primary" href="{{ url_for('.create_post') }}">Додати перший пост</a>
+</div>
+{% endif %}
+{% endblock %}
