@@ -73,3 +73,7 @@ python -m unittest discover tests -v       # Ran 89 tests ... OK
 
 **Розгорнутий сайт на Render**
 ![Render](screenshots/lab5/13_render_live_products.jpg)
+
+### Модульні тести
+**Виконання тестів у командному рядку (показано кінець виводу; усього 89 тестів, OK)**
+![Тести в командному рядку](screenshots/lab5/14_tests_cli.png)
