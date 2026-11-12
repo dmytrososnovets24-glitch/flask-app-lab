@@ -1,79 +1,139 @@
-# Лабораторна робота №5. WTF-форми
+# Лабораторна робота №6. ORM. Вступ до SQLAlchemy. Операції CRUD
 
 **Студент:** Сосновець Дмитро Сергійович, ІПЗ-33
-**Гілка:** `lab5` (створена з `lab4`) · **Сайт:** https://flask-app-sosnovets.onrender.com/
+**Гілка:** [`lab6`](https://github.com/dmytrososnovets24-glitch/flask-app-lab/tree/lab6) (створена з `lab5`)
 
-## Завдання 1. Контактна форма на Flask-WTF
-- Клас `ContactForm` у окремому модулі `app/forms.py`: `name` (4–10 символів), `email`, `phone` (`+380XXXXXXXXX`), `subject` (випадаючий список), `message` (до 500 символів), кнопка відправки.
-- Валідація полів і захист від CSRF; поля виводяться макросом `render_field` (`app/templates/macros/forms.html`) разом із блоком помилок.
-- flash-повідомлення з категоріями; дані форми дописуються в лог-файл `logs/contact_messages.log` (модуль `logging`), про успіх/збій запису користувач бачить flash.
-- Post/Redirect/Get: після обробки форми виконується редірект.
+## Завдання
+Веб-додаток для керування публікаціями (постами): дані зберігаються через ORM SQLAlchemy (синтаксис 2.0), реалізовано CRUD-операції, міграції Flask-Migrate, форми Flask-WTF, модульні тести `unittest`.
 
-## Завдання 2. Блюпринт `products` на TinyDB + Flask-WTF
-- Сховище: `data/products.json` (TinyDB), автоматичні `id` і `created_at`; початкові товари створюються при першому запуску.
-- Поля товару: `id`, `name` (≥3 символи), `content` (textarea 5×40), `price` (>0, не більше 2 знаків після коми), `category` (зі списку), `quantity` (≥0), `image`, `created_at`.
-- CRUD: `/product/` (список), `/product/<id>` (товар, обробка 404), `/product/add`, `/product/<id>/edit`, `/product/<id>/delete` (POST, підтвердження, CSRF).
-- Зображення: PNG/JPG/JPEG, ліміт 2 МБ, перевірка вмісту, ім'я файлу — UUID, збереження в `app/products/static/uploads/`, шлях у TinyDB, заглушка за відсутності фото; при заміні/видаленні старий файл видаляється.
-- **Тести:** 89 (`unittest`) — контактна форма, повний CRUD, валідація, зображення, CSRF.
+## Що зроблено
 
-## Структура (нове в цій лабі)
+### Частина 1. Налаштування, application factory
+- Встановлено `flask-sqlalchemy` і `flask-migrate` (додано в `requirements.txt`).
+- `app/config.py` — класи `Config`, `DevelopmentConfig`, `TestingConfig` (SQLite в пам'яті, CSRF вимкнено), `ProductionConfig`.
+- `app/__init__.py` — фабрика `create_app(config_name)`: вибір конфігурації, ініціалізація `SQLAlchemy` і `Migrate`, реєстрація блюпринтів, обробник помилки 404 (шаблон `404.html`).
+- Змінні середовища: `.flaskenv` (`FLASK_APP`, `FLASK_CONFIG`, порт) і `.env` (`SECRET_KEY`, `DATABASE_URL`). Файл `.env` не потрапляє в git, у репозиторії є шаблон `.env.example`.
+- Маршрути головних сторінок винесено в блюпринт `main`, точка входу — `run.py`.
+
+### Частина 2. Блюпринт `posts`, модель `Post`
+- `app/posts/__init__.py` — блюпринт `post_bp` із власними шаблонами та статикою.
+- `app/posts/models.py` — модель `Post`: `id`, `title` (String(150), not null), `content` (Text, not null), `posted` (DateTime, за замовчуванням поточний час UTC), `category` (Enum: news, publication, tech, other), метод `__repr__`.
+- У Flask Shell вручну створено базу (`db.create_all()`), додано пости, виконано запити, видалено пост, після чого таблиці та папку `instance` видалено.
+
+### Частина 3. Міграції
+- `flask db init`, `flask db migrate -m "Initial migration"`, `flask db upgrade` — створено `instance/data.sqlite` з таблицями `posts` і `alembic_version`.
+- До моделі додано поля `is_active` (Boolean, default True) і `author` (String(20), default 'Anonymous'), виконано `flask db migrate -m "add is_active, author"` і `flask db upgrade`.
+- Скрипти міграцій лежать у `migrations/versions/`.
+
+### Частина 4. CRUD (за TDD: спочатку тести, потім код)
+| Метод | Шлях | Дія | Шаблон |
+|---|---|---|---|
+| GET / POST | `/post/create` | створення поста | `add_post.html` |
+| GET | `/post` | список видимих постів, новіші зверху | `posts.html` |
+| GET | `/post/<id>` | перегляд поста | `detail_post.html` |
+| GET / POST | `/post/<id>/update` | редагування поста | `add_post.html` |
+| GET / POST | `/post/<id>/delete` | підтвердження і видалення | `delete_confirm.html` |
+
+- Форма `PostForm` (`app/posts/forms.py`): `title`, `content`, `is_active`, `publish_date` (DateTimeLocalField), `category` (SelectField), `submit`; поля виводяться макросом `render_field`.
+- Автор поста — користувач із сесії, інакше `Anonymous`; поля автора у формі немає.
+- Після кожної операції — flash-повідомлення і перенаправлення (Post/Redirect/Get).
+- При редагуванні форма заповнюється даними поста (`PostForm(obj=post)`), дата публікації підставляється вручну, зміни записуються через `form.populate_obj(post)`.
+
+### Частина 5. Стилізація
+- `app/posts/static/css/posts.css` — стилі карток, міток категорій, сторінок поста; підключається через блок `css` базового шаблону.
+- `app/posts/static/img/default.jpg` — зображення для карток постів.
+- У списку текст поста обрізається до 100 символів (`post.content[:100]`).
+
+### Тести
+- `tests/test_posts.py` — 35 тестів: модель, створення, перегляд, редагування, видалення, валідація, CSRF, сторінка 404.
+- Усього в проєкті 124 тести, усі проходять. Повний вивід: [docs/test_results.txt](docs/test_results.txt).
+
+## Структура (нове в цій лабораторній)
 ```
-app/forms.py, app/contact_log.py
-app/templates/macros/forms.html, app/templates/404.html
-app/products/ storage.py (TinyDB), forms.py, views.py, static/uploads/, templates/products/{products,detail_product,product_form}.html
-tests/ test_contact_form.py, test_products_bp.py
+run.py, .flaskenv, .env.example
+app/__init__.py          create_app(), db, migrate, обробник 404
+app/config.py            Config, DevelopmentConfig, TestingConfig, ProductionConfig
+app/templates/           base.html (блок css), 404.html, macros/form_macros.html
+app/posts/               __init__.py, models.py, forms.py, views.py
+app/posts/static/        css/posts.css, img/default.jpg
+app/posts/templates/posts/   posts.html, detail_post.html, add_post.html, delete_confirm.html
+migrations/              скрипти міграцій Alembic
+tests/                   __init__.py, test_posts.py (+ тести попередніх лабораторних)
 ```
 
-## Запуск і тести
+## Запуск
 ```bash
+python -m venv .venv
+.venv\Scripts\activate
 pip install -r requirements.txt
+copy .env.example .env
+flask db upgrade
 flask run                                  # http://127.0.0.1:8080
-python -m unittest discover tests -v       # Ran 89 tests ... OK
+python -m unittest discover tests -v
 ```
-Результат тестів: [docs/test_results.txt](docs/test_results.txt) · приклад рядка логу: [docs/contact_messages_example.log](docs/contact_messages_example.log)
 
 ## Скриншоти
-### Завдання 1. Контактна форма
-**Порожня форма**
-![Форма](screenshots/lab5/01_contact_form_empty.jpg)
 
-**Помилки валідації**
-![Помилки](screenshots/lab5/02_contact_form_validation_errors.jpg)
+### Частина 2. Робота з базою у Flask Shell
+**Створення таблиць, додавання постів, запити, видалення поста, `db.drop_all()` і видалення папки `instance`**
 
-**Успішна відправка (PRG + flash)**
-![Успіх](screenshots/lab5/03_contact_form_success_prg_flash.jpg)
+![Flask shell](screenshots/lab6/01_flask_shell.png)
 
-### Завдання 2. Товари
-**Список товарів**
-![Список](screenshots/lab5/04_products_list_seeded.jpg)
+### Частина 3. Міграції
+**`flask db init`, `flask db migrate -m "Initial migration"`, `flask db upgrade`; у базі з'явилися таблиці `alembic_version` і `posts`**
 
-**Додавання: помилки валідації**
-![Помилки додавання](screenshots/lab5/05_product_add_validation_errors.jpg)
+![Початкова міграція](screenshots/lab6/02_flask_db_init_migrate_upgrade.png)
 
-**Додавання: заповнена форма із зображенням**
-![Форма додавання](screenshots/lab5/06_product_add_form_filled_with_image.jpg)
+**Міграція після додавання полів `is_active` і `author`, історія міграцій, нові стовпці в таблиці**
 
-**Сторінка товару після додавання (PRG + flash)**
-![Деталі](screenshots/lab5/07_product_detail_after_add.jpg)
+![Міграція з новими полями](screenshots/lab6/03_flask_db_add_columns.png)
 
-**Редагування: форма з поточними даними**
-![Редагування](screenshots/lab5/08_product_edit_form_prefilled.jpg)
+### Частина 6. Ручне тестування інтерфейсу
+**Додавання поста: заповнена форма**
 
-**Після редагування (нове зображення, id і дата збережені)**
-![Після редагування](screenshots/lab5/09_product_detail_after_edit.jpg)
+![Форма додавання](screenshots/lab6/05_add_post_form.jpg)
 
-**Список із фото товару**
-![Список із фото](screenshots/lab5/10_products_list_with_image.jpg)
+**Після додавання: повідомлення і новий пост у списку**
 
-**Після видалення**
-![Видалення](screenshots/lab5/11_products_list_after_delete.jpg)
+![Пост додано](screenshots/lab6/06_post_added_flash.jpg)
 
-**Товар не знайдено (404)**
-![404](screenshots/lab5/12_product_not_found_404.jpg)
+**Відображення постів: список карток (новіші зверху)**
 
-**Розгорнутий сайт на Render**
-![Render](screenshots/lab5/13_render_live_products.jpg)
+![Список постів](screenshots/lab6/07_posts_list.jpg)
+
+**Перегляд одного поста (автор — користувач із сесії)**
+
+![Перегляд поста](screenshots/lab6/08_post_detail.jpg)
+
+**Редагування: форма з поточними даними поста**
+
+![Форма редагування](screenshots/lab6/09_edit_post_form.jpg)
+
+**Після редагування: повідомлення й оновлений пост**
+
+![Пост оновлено](screenshots/lab6/10_post_updated_flash.jpg)
+
+**Видалення: сторінка підтвердження**
+
+![Підтвердження видалення](screenshots/lab6/11_delete_confirm.jpg)
+
+**Після видалення: повідомлення й оновлений список**
+
+![Після видалення](screenshots/lab6/12_posts_after_delete.jpg)
+
+**Сторінка помилки 404 для неіснуючого поста**
+
+![404](screenshots/lab6/13_post_not_found_404.jpg)
+
+**Ті самі пости в базі даних (запит у Flask Shell): три пости, видаленого поста з id 4 немає**
+
+![Перевірка бази](screenshots/lab6/14_db_check_flask_shell.png)
 
 ### Модульні тести
-**Виконання тестів у командному рядку (показано кінець виводу; усього 89 тестів, OK)**
-![Тести в командному рядку](screenshots/lab5/14_tests_cli.png)
+**`python -m unittest tests.test_posts -v` — 35 тестів CRUD для постів**
+
+![Тести постів](screenshots/lab6/15_tests_posts.png)
+
+**`python -m unittest discover tests` — усі 124 тести проєкту**
+
+![Усі тести](screenshots/lab6/16_tests_all.png)

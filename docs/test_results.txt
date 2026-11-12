@@ -33,6 +33,41 @@ test_phone_wrong_format (test_contact_form.ContactFormTestCase.test_phone_wrong_
 test_subject_must_be_from_list (test_contact_form.ContactFormTestCase.test_subject_must_be_from_list) ... ok
 test_subject_required (test_contact_form.ContactFormTestCase.test_subject_required) ... ok
 test_valid_post_redirects_logs_and_flashes (test_contact_form.ContactFormTestCase.test_valid_post_redirects_logs_and_flashes) ... ok
+test_unknown_page_shows_custom_404 (test_posts.ErrorPageTests.test_unknown_page_shows_custom_404) ... ok
+test_author_is_anonymous_without_session (test_posts.PostCreateTests.test_author_is_anonymous_without_session) ... ok
+test_author_is_user_from_session (test_posts.PostCreateTests.test_author_is_user_from_session) ... ok
+test_category_must_be_from_list (test_posts.PostCreateTests.test_category_must_be_from_list) ... ok
+test_content_required (test_posts.PostCreateTests.test_content_required) ... ok
+test_create_form_renders (test_posts.PostCreateTests.test_create_form_renders) ... ok
+test_create_post (test_posts.PostCreateTests.test_create_post) ... ok
+test_create_redirects_to_list (test_posts.PostCreateTests.test_create_redirects_to_list) ... ok
+test_invalid_submit_shows_flash (test_posts.PostCreateTests.test_invalid_submit_shows_flash) ... ok
+test_publish_date_defaults_to_now (test_posts.PostCreateTests.test_publish_date_defaults_to_now) ... ok
+test_title_required (test_posts.PostCreateTests.test_title_required) ... ok
+test_title_too_long (test_posts.PostCreateTests.test_title_too_long) ... ok
+test_title_too_short (test_posts.PostCreateTests.test_title_too_short) ... ok
+test_unchecked_is_active_creates_hidden_post (test_posts.PostCreateTests.test_unchecked_is_active_creates_hidden_post) ... ok
+test_create_without_token_is_rejected (test_posts.PostCsrfTests.test_create_without_token_is_rejected) ... ok
+test_delete_without_token_is_rejected (test_posts.PostCsrfTests.test_delete_without_token_is_rejected) ... ok
+test_forms_contain_csrf_token (test_posts.PostCsrfTests.test_forms_contain_csrf_token) ... ok
+test_delete_confirmation_page (test_posts.PostDeleteTests.test_delete_confirmation_page) ... ok
+test_delete_not_found (test_posts.PostDeleteTests.test_delete_not_found) ... ok
+test_delete_post (test_posts.PostDeleteTests.test_delete_post) ... ok
+test_defaults (test_posts.PostModelTests.test_defaults) ... ok
+test_repr (test_posts.PostModelTests.test_repr) ... ok
+test_detail_not_found (test_posts.PostReadTests.test_detail_not_found) ... ok
+test_detail_shows_full_post (test_posts.PostReadTests.test_detail_shows_full_post) ... ok
+test_empty_list (test_posts.PostReadTests.test_empty_list) ... ok
+test_html_in_post_is_escaped (test_posts.PostReadTests.test_html_in_post_is_escaped) ... ok
+test_list_shows_only_active_posts (test_posts.PostReadTests.test_list_shows_only_active_posts) ... ok
+test_list_shows_posts_with_details (test_posts.PostReadTests.test_list_shows_posts_with_details) ... ok
+test_list_sorted_by_date_descending (test_posts.PostReadTests.test_list_sorted_by_date_descending) ... ok
+test_list_truncates_content_to_100_chars (test_posts.PostReadTests.test_list_truncates_content_to_100_chars) ... ok
+test_update_can_hide_post (test_posts.PostUpdateTests.test_update_can_hide_post) ... ok
+test_update_form_is_prefilled (test_posts.PostUpdateTests.test_update_form_is_prefilled) ... ok
+test_update_invalid_does_not_change_post (test_posts.PostUpdateTests.test_update_invalid_does_not_change_post) ... ok
+test_update_not_found (test_posts.PostUpdateTests.test_update_not_found) ... ok
+test_update_post (test_posts.PostUpdateTests.test_update_post) ... ok
 test_add_form_renders (test_products_bp.ProductsCreateTests.test_add_form_renders) ... ok
 test_add_sets_id_and_created_at_automatically (test_products_bp.ProductsCreateTests.test_add_sets_id_and_created_at_automatically) ... ok
 test_add_valid_redirects_to_detail_prg (test_products_bp.ProductsCreateTests.test_add_valid_redirects_to_detail_prg) ... ok
@@ -93,6 +128,6 @@ test_greetings_without_age (test_user_bp.FlaskAppTestCase.test_greetings_without
 Без параметра age сторінка все одно відкривається. ... ok
 
 ----------------------------------------------------------------------
-Ran 89 tests in 0.760s
+Ran 124 tests in 1.604s
 
 OK
