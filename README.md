@@ -51,3 +51,6 @@ python -m unittest discover tests -v       # Ran 26 tests ... OK
 
 **Таблиця кукі (темна схема)**
 ![Таблиця кукі](screenshots/lab4/06_cookies_table_dark.jpg)
+
+**Виконання модульних тестів у командному рядку (26 тестів, OK)**
+![Тести в командному рядку](screenshots/lab4/07_tests_cli.png)
