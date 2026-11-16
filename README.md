@@ -1,65 +1,127 @@
-# Лабораторна робота №6. ORM. Вступ до SQLAlchemy. Операції CRUD
+# Лабораторна робота №7. Зв'язки. Робота із міграціями
 
 **Студент:** Сосновець Дмитро Сергійович, ІПЗ-33
-**Гілка:** [`lab6`](https://github.com/dmytrososnovets24-glitch/flask-app-lab/tree/lab6) (створена з `lab5`)
+**Гілка:** [`lab7`](https://github.com/dmytrososnovets24-glitch/flask-app-lab/tree/lab7) (створена з `lab6`)
 
-## Завдання
-Веб-додаток для керування публікаціями (постами): дані зберігаються через ORM SQLAlchemy (синтаксис 2.0), реалізовано CRUD-операції, міграції Flask-Migrate, форми Flask-WTF, модульні тести `unittest`.
+## Мета
+Набути практичних навичок створення моделей із зовнішніми ключами, проведення та відкату міграцій, синхронізації структури бази з моделями, а також виправлення помилок, що виникають під час змін у схемі БД.
 
-## Що зроблено
+Пререквізити (доступ до бази даних, об'єкт `db` класу `SQLAlchemy`, Flask-Migrate) уже налаштовані в проєкті: `app/__init__.py`, `app/config.py`, каталог `migrations/`.
 
-### Частина 1. Налаштування, application factory
-- Встановлено `flask-sqlalchemy` і `flask-migrate` (додано в `requirements.txt`).
-- `app/config.py` — класи `Config`, `DevelopmentConfig`, `TestingConfig` (SQLite в пам'яті, CSRF вимкнено), `ProductionConfig`.
-- `app/__init__.py` — фабрика `create_app(config_name)`: вибір конфігурації, ініціалізація `SQLAlchemy` і `Migrate`, реєстрація блюпринтів, обробник помилки 404 (шаблон `404.html`).
-- Змінні середовища: `.flaskenv` (`FLASK_APP`, `FLASK_CONFIG`, порт) і `.env` (`SECRET_KEY`, `DATABASE_URL`). Файл `.env` не потрапляє в git, у репозиторії є шаблон `.env.example`.
-- Маршрути головних сторінок винесено в блюпринт `main`, точка входу — `run.py`.
+## Хід роботи
 
-### Частина 2. Блюпринт `posts`, модель `Post`
-- `app/posts/__init__.py` — блюпринт `post_bp` із власними шаблонами та статикою.
-- `app/posts/models.py` — модель `Post`: `id`, `title` (String(150), not null), `content` (Text, not null), `posted` (DateTime, за замовчуванням поточний час UTC), `category` (Enum: news, publication, tech, other), метод `__repr__`.
-- У Flask Shell вручну створено базу (`db.create_all()`), додано пости, виконано запити, видалено пост, після чого таблиці та папку `instance` видалено.
+### Частина 1. Початок роботи
+- У блюпринті `products` створено файл `app/products/models.py` з моделлю `Product` (`id`, `name` — String(100), `price` — Float).
+- Команду `flask db init` повторно не виконував: каталог `migrations` у проєкті вже існує, а ця команда запускається лише один раз.
+- `flask db migrate -m "Add Product"` → `flask db upgrade` — у базі з'явилася таблиця `products`.
+- Через `flask shell` додано два товари: `Pc` (700) і `MAC` (500), вибірка `select(Product)` повертає обидва.
 
-### Частина 3. Міграції
-- `flask db init`, `flask db migrate -m "Initial migration"`, `flask db upgrade` — створено `instance/data.sqlite` з таблицями `posts` і `alembic_version`.
-- До моделі додано поля `is_active` (Boolean, default True) і `author` (String(20), default 'Anonymous'), виконано `flask db migrate -m "add is_active, author"` і `flask db upgrade`.
-- Скрипти міграцій лежать у `migrations/versions/`.
+### Частина 2. Модель `Category`, зв'язок «один до багатьох»
+- Додано модель `Category` (`id`, `name` — String(128), unique) і двосторонній зв'язок: `Category.products` ↔ `Product.category`, зовнішній ключ `Product.category_id → categories.id`.
+- `flask db migrate -m "Add category"` згенерувала рядок `batch_op.create_foreign_key(None, 'categories', ...)`, тому `flask db upgrade` завершилась помилкою:
+  ```
+  ValueError: Constraint must have a name
+  ```
+- Виправлення: у файлі міграції вказано ім'я обмеження — `batch_op.create_foreign_key('category_id', 'categories', ['category_id'], ['id'])`.
+- Після невдалої спроби в базі залишилась таблиця `categories` (SQLite не відкочує DDL), через що повторний `upgrade` падав з `table categories already exists`. Таблицю видалено вручну, після цього `flask db upgrade` виконалась.
+- `flask db migrate` → `No changes in schema detected`, `flask db check` → `No new upgrade operations detected`.
+- `flask db downgrade` теж не виконувалась (`drop_constraint(None, ...)`). У функції `downgrade()` виправлено на `batch_op.drop_constraint('category_id', type_='foreignkey')`, після чого відкат пройшов: у базі знову лише `products` із двома товарами.
 
-### Частина 4. CRUD (за TDD: спочатку тести, потім код)
-| Метод | Шлях | Дія | Шаблон |
-|---|---|---|---|
-| GET / POST | `/post/create` | створення поста | `add_post.html` |
-| GET | `/post` | список видимих постів, новіші зверху | `posts.html` |
-| GET | `/post/<id>` | перегляд поста | `detail_post.html` |
-| GET / POST | `/post/<id>/update` | редагування поста | `add_post.html` |
-| GET / POST | `/post/<id>/delete` | підтвердження і видалення | `delete_confirm.html` |
+### Частина 3. Єдиний стиль іменування обмежень
+- У клас `Base` (`app/__init__.py`) додано `MetaData(naming_convention={...})` з шаблонами для `ix`, `uq`, `ck`, `fk`, `pk`.
+- Відкочений файл першої спроби видалено, виконано `flask db migrate -m "Add category attempt #2"`. Тепер імена генеруються автоматично: `pk_categories`, `uq_categories_name`, `fk_products_category_id_categories`.
+- `flask db upgrade` виконалась без правок файлу міграції, `flask db check` → `No new upgrade operations detected`.
 
-- Форма `PostForm` (`app/posts/forms.py`): `title`, `content`, `is_active`, `publish_date` (DateTimeLocalField), `category` (SelectField), `submit`; поля виводяться макросом `render_field`.
-- Автор поста — користувач із сесії, інакше `Anonymous`; поля автора у формі немає.
-- Після кожної операції — flash-повідомлення і перенаправлення (Post/Redirect/Get).
-- При редагуванні форма заповнюється даними поста (`PostForm(obj=post)`), дата публікації підставляється вручну, зміни записуються через `form.populate_obj(post)`.
+### Частина 4. Нове поле `active` у моделі `Product`
+- Додано `active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)`.
+- `flask db check` → `ERROR [flask_migrate] Error: New upgrade operations detected: [('add_column', None, 'products', Column('active', Boolean(), ...))]`.
+- `flask db migrate -m "Add active column to products"`, далі `flask db upgrade` завершилась помилкою:
+  ```
+  sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) Cannot add a NOT NULL column with default value NULL
+  [SQL: ALTER TABLE products ADD COLUMN active BOOLEAN NOT NULL]
+  ```
+- У цей момент `flask db check` → `Target database is not up to date`, `flask db current` показує `869e8b76e7f0`, а `flask db heads` — `54479cfb5c19`: база відстає від каталогу міграцій.
+- Виправлення (3-й спосіб): у файлі міграції стовпець додається з `server_default=sa.true()`. Після цього `flask db upgrade` виконалась, наявні рядки отримали `active = 1`, `flask db check` → `No new upgrade operations detected`.
+- `flask db current --verbose` і `flask db heads` показують ту саму ревізію `54479cfb5c19 (head)`.
 
-### Частина 5. Стилізація
-- `app/posts/static/css/posts.css` — стилі карток, міток категорій, сторінок поста; підключається через блок `css` базового шаблону.
-- `app/posts/static/img/default.jpg` — зображення для карток постів.
-- У списку текст поста обрізається до 100 символів (`post.content[:100]`).
-
-### Тести
-- `tests/test_posts.py` — 35 тестів: модель, створення, перегляд, редагування, видалення, валідація, CSRF, сторінка 404.
-- Усього в проєкті 124 тести, усі проходять. Повний вивід: [docs/test_results.txt](docs/test_results.txt).
-
-## Структура (нове в цій лабораторній)
+### Частина 5. Заповнення даними
+Через `flask shell` додано товар `iPhone 15` (999.99), категорію `Laptops` і товар `Gaming Laptop` (1500.00, `active=False`, `category=laptops`). Перевірка зв'язку:
 ```
-run.py, .flaskenv, .env.example
-app/__init__.py          create_app(), db, migrate, обробник 404
-app/config.py            Config, DevelopmentConfig, TestingConfig, ProductionConfig
-app/templates/           base.html (блок css), 404.html, macros/form_macros.html
-app/posts/               __init__.py, models.py, forms.py, views.py
-app/posts/static/        css/posts.css, img/default.jpg
-app/posts/templates/posts/   posts.html, detail_post.html, add_post.html, delete_confirm.html
-migrations/              скрипти міграцій Alembic
-tests/                   __init__.py, test_posts.py (+ тести попередніх лабораторних)
+>>> product.category.name
+'Laptops'
+>>> laptops.products
+[<Product Gaming Laptop - $1500.0>]
 ```
+У SQLAlchemy 2.x товар, прив'язаний через `category=laptops`, сам у сесію не потрапляє, тому перед `commit()` потрібен `db.session.add(product)`.
+
+### Частина 6. Поле `created_at`
+1. Додано `created_at` з `default=datetime.utcnow`, `flask db migrate -m "Add created_at"`. `flask db upgrade` завершилась помилкою `Cannot add a NOT NULL column with default value NULL [SQL: ALTER TABLE products ADD COLUMN created_at DATETIME NOT NULL]`.
+2. У файлі міграції додано `server_default=sa.text("CURRENT_TIMESTAMP")` — міграція застосувалась, усі рядки отримали дату й час.
+3. Виконано `flask db downgrade`, файл цієї міграції видалено, а в моделі задано `server_default=func.now()`.
+4. `flask db migrate -m "Add created_at with server_default"` — файл згенеровано коректно (`server_default=sa.text('(CURRENT_TIMESTAMP)')`), `flask db upgrade` пройшла без правок.
+
+### Частина 7. Міграція вручну для додавання даних
+- Моделі й база синхронізовані, тому `flask db migrate` повертає `No changes in schema detected`.
+- `flask db revision -m "Insert data into products table"` створила порожній файл; функції `upgrade()` і `downgrade()` замінено: `op.bulk_insert` додає категорії `Electronics`, `Books`, `Clothing` і товари `Laptop`, `Smartphone LG`, `Novel`, `T-Shirt`, а `downgrade()` видаляє саме ці записи за назвами.
+- `flask db upgrade` — дані з'явились у таблицях. Додатково перевірено `flask db downgrade` (вставлені рядки зникають) і повторний `flask db upgrade`.
+
+## Підсумкові моделі (`app/products/models.py`)
+```python
+class Category(db.Model):
+    __tablename__ = 'categories'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)
+
+    products: Mapped[list['Product']] = relationship(
+        'Product', back_populates='category', lazy='select')
+
+
+class Product(db.Model):
+    __tablename__ = 'products'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    price: Mapped[float] = mapped_column(Float, nullable=False)
+    active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    category_id: Mapped[int | None] = mapped_column(db.ForeignKey('categories.id'))
+    category: Mapped['Category'] = relationship('Category', back_populates='products')
+```
+
+## Файли міграцій (`migrations/versions/`)
+| Ревізія | Повідомлення | Що робить |
+|---|---|---|
+| `7c3c8d53fb31` | Add Product | таблиця `products` |
+| `869e8b76e7f0` | Add category attempt #2 | таблиця `categories`, стовпець `products.category_id`, зовнішній ключ `fk_products_category_id_categories` |
+| `54479cfb5c19` | Add active column to products | стовпець `active` з `server_default=sa.true()` |
+| `e1c97fc9abc8` | Add created_at with server_default | стовпець `created_at` з `server_default` |
+| `68ecae781b31` | Insert data into products table | вставка категорій і товарів (`op.bulk_insert`) |
+
+Дві перші ревізії в історії (`bf8943160616`, `567f0b664c1e`) — це міграції таблиці `posts`, які вже були в проєкті.
+
+## Скриншоти
+
+### Остаточна схема таблиць
+**Таблиці бази та SQL-схема `categories` і `products` (імена обмежень за `naming_convention`, значення за замовчуванням для `active` і `created_at`)**
+
+![Схема таблиць](screenshots/lab7/01_db_schema.png)
+
+### Остаточні дані у БД
+**Таблиці `categories`, `products` і `alembic_version`**
+
+![Дані у БД](screenshots/lab7/02_db_data.png)
+
+### Історія міграцій
+**`flask db history`; поточна ревізія бази (`flask db current`) збігається з останньою доступною (`flask db heads`)**
+
+![Історія міграцій](screenshots/lab7/03_flask_db_history.png)
+
+## Тести
+- `tests/test_product_models.py` — 19 тестів: моделі `Product` і `Category`, зв'язок «один до багатьох», унікальність назви категорії, імена обмежень, а також повний ланцюжок міграцій на порожній базі (`upgrade` до останньої ревізії, збіг схеми з моделями, `downgrade`).
+- Усього в проєкті 143 тести, усі проходять. Повний вивід: [docs/test_results.txt](docs/test_results.txt).
 
 ## Запуск
 ```bash
@@ -67,73 +129,8 @@ python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
 copy .env.example .env
-flask db upgrade
+flask db upgrade                           # створює таблиці й вставляє дані
+flask db history
 flask run                                  # http://127.0.0.1:8080
 python -m unittest discover tests -v
 ```
-
-## Скриншоти
-
-### Частина 2. Робота з базою у Flask Shell
-**Створення таблиць, додавання постів, запити, видалення поста, `db.drop_all()` і видалення папки `instance`**
-
-![Flask shell](screenshots/lab6/01_flask_shell.png)
-
-### Частина 3. Міграції
-**`flask db init`, `flask db migrate -m "Initial migration"`, `flask db upgrade`; у базі з'явилися таблиці `alembic_version` і `posts`**
-
-![Початкова міграція](screenshots/lab6/02_flask_db_init_migrate_upgrade.png)
-
-**Міграція після додавання полів `is_active` і `author`, історія міграцій, нові стовпці в таблиці**
-
-![Міграція з новими полями](screenshots/lab6/03_flask_db_add_columns.png)
-
-### Частина 6. Ручне тестування інтерфейсу
-**Додавання поста: заповнена форма**
-
-![Форма додавання](screenshots/lab6/05_add_post_form.jpg)
-
-**Після додавання: повідомлення і новий пост у списку**
-
-![Пост додано](screenshots/lab6/06_post_added_flash.jpg)
-
-**Відображення постів: список карток (новіші зверху)**
-
-![Список постів](screenshots/lab6/07_posts_list.jpg)
-
-**Перегляд одного поста (автор — користувач із сесії)**
-
-![Перегляд поста](screenshots/lab6/08_post_detail.jpg)
-
-**Редагування: форма з поточними даними поста**
-
-![Форма редагування](screenshots/lab6/09_edit_post_form.jpg)
-
-**Після редагування: повідомлення й оновлений пост**
-
-![Пост оновлено](screenshots/lab6/10_post_updated_flash.jpg)
-
-**Видалення: сторінка підтвердження**
-
-![Підтвердження видалення](screenshots/lab6/11_delete_confirm.jpg)
-
-**Після видалення: повідомлення й оновлений список**
-
-![Після видалення](screenshots/lab6/12_posts_after_delete.jpg)
-
-**Сторінка помилки 404 для неіснуючого поста**
-
-![404](screenshots/lab6/13_post_not_found_404.jpg)
-
-**Ті самі пости в базі даних (запит у Flask Shell): три пости, видаленого поста з id 4 немає**
-
-![Перевірка бази](screenshots/lab6/14_db_check_flask_shell.png)
-
-### Модульні тести
-**`python -m unittest tests.test_posts -v` — 35 тестів CRUD для постів**
-
-![Тести постів](screenshots/lab6/15_tests_posts.png)
-
-**`python -m unittest discover tests` — усі 124 тести проєкту**
-
-![Усі тести](screenshots/lab6/16_tests_all.png)
