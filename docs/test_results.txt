@@ -68,6 +68,25 @@ test_update_form_is_prefilled (test_posts.PostUpdateTests.test_update_form_is_pr
 test_update_invalid_does_not_change_post (test_posts.PostUpdateTests.test_update_invalid_does_not_change_post) ... ok
 test_update_not_found (test_posts.PostUpdateTests.test_update_not_found) ... ok
 test_update_post (test_posts.PostUpdateTests.test_update_post) ... ok
+test_append_product_through_category (test_product_models.CategoryRelationTests.test_append_product_through_category) ... ok
+test_category_has_many_products (test_product_models.CategoryRelationTests.test_category_has_many_products) ... ok
+test_category_name_is_unique (test_product_models.CategoryRelationTests.test_category_name_is_unique) ... ok
+test_category_repr (test_product_models.CategoryRelationTests.test_category_repr) ... ok
+test_product_belongs_to_category (test_product_models.CategoryRelationTests.test_product_belongs_to_category) ... ok
+test_downgrade_removes_inserted_data (test_product_models.MigrationChainTests.test_downgrade_removes_inserted_data) ... ok
+test_downgrade_to_base (test_product_models.MigrationChainTests.test_downgrade_to_base) ... ok
+test_models_match_migrated_schema (test_product_models.MigrationChainTests.test_models_match_migrated_schema) ... ok
+test_upgrade_builds_schema (test_product_models.MigrationChainTests.test_upgrade_builds_schema) ... ok
+test_upgrade_inserts_data (test_product_models.MigrationChainTests.test_upgrade_inserts_data) ... ok
+test_constraint_names_follow_convention (test_product_models.NamingConventionTests.test_constraint_names_follow_convention) ... ok
+test_active_can_be_false (test_product_models.ProductModelTests.test_active_can_be_false) ... ok
+test_active_is_true_by_default (test_product_models.ProductModelTests.test_active_is_true_by_default) ... ok
+test_category_is_optional (test_product_models.ProductModelTests.test_category_is_optional) ... ok
+test_create_product (test_product_models.ProductModelTests.test_create_product) ... ok
+test_created_at_is_set_by_database (test_product_models.ProductModelTests.test_created_at_is_set_by_database) ... ok
+test_name_is_required (test_product_models.ProductModelTests.test_name_is_required) ... ok
+test_price_is_required (test_product_models.ProductModelTests.test_price_is_required) ... ok
+test_repr (test_product_models.ProductModelTests.test_repr) ... ok
 test_add_form_renders (test_products_bp.ProductsCreateTests.test_add_form_renders) ... ok
 test_add_sets_id_and_created_at_automatically (test_products_bp.ProductsCreateTests.test_add_sets_id_and_created_at_automatically) ... ok
 test_add_valid_redirects_to_detail_prg (test_products_bp.ProductsCreateTests.test_add_valid_redirects_to_detail_prg) ... ok
@@ -128,6 +147,6 @@ test_greetings_without_age (test_user_bp.FlaskAppTestCase.test_greetings_without
 Без параметра age сторінка все одно відкривається. ... ok
 
 ----------------------------------------------------------------------
-Ran 124 tests in 1.604s
+Ran 143 tests in 3.918s
 
 OK
