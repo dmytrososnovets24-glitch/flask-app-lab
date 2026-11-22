@@ -176,7 +176,7 @@ class MigrationChainTests(unittest.TestCase):
 
     def test_downgrade_removes_inserted_data(self):
         upgrade(directory=MIGRATIONS_DIR)
-        downgrade(directory=MIGRATIONS_DIR, revision="-1")
+        downgrade(directory=MIGRATIONS_DIR, revision="e1c97fc9abc8")  # ревізія перед вставкою даних
         self.assertEqual(self.scalar("SELECT count(*) FROM products"), 0)
         self.assertEqual(self.scalar("SELECT count(*) FROM categories"), 0)
 
