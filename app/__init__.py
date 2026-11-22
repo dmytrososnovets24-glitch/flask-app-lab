@@ -1,11 +1,72 @@
-from flask import Flask
+import os
 
-app = Flask(__name__)
-app.config.from_object('config.Config')
+from flask import Flask, flash, render_template
+from flask_bcrypt import Bcrypt
+from flask_login import LoginManager
+from flask_migrate import Migrate
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import MetaData
+from sqlalchemy.orm import DeclarativeBase
+from werkzeug.exceptions import NotFound
 
-from . import views
-from .users import users_bp
-from .products import products_bp
+from .config import config
 
-app.register_blueprint(users_bp, url_prefix='/users')
-app.register_blueprint(products_bp, url_prefix='/product')
+
+class Base(DeclarativeBase):
+    # Єдиний стиль іменування обмежень: імена передбачувані,
+    # тому Alembic генерує коректні upgrade() і downgrade().
+    metadata = MetaData(naming_convention={
+        "ix": 'ix_%(column_0_label)s',
+        "uq": "uq_%(table_name)s_%(column_0_name)s",
+        "ck": "ck_%(table_name)s_%(constraint_name)s",
+        "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+        "pk": "pk_%(table_name)s"
+    })
+
+
+db = SQLAlchemy(model_class=Base)
+migrate = Migrate()
+bcrypt = Bcrypt()
+login_manager = LoginManager()
+
+
+def create_app(config_name=None):
+    """Application factory: створює застосунок для вказаного режиму."""
+    config_name = config_name or os.environ.get('FLASK_CONFIG', 'default')
+
+    app = Flask(__name__)
+    app.config.from_object(config[config_name])
+
+    db.init_app(app)
+    migrate.init_app(app, db, render_as_batch=True)
+    bcrypt.init_app(app)
+    login_manager.init_app(app)
+
+    # налаштування маршруту перенаправлення для неавторизованих користувачів
+    login_manager.login_view = 'users.login'
+    login_manager.login_message = 'Будь ласка, увійдіть, щоб отримати доступ до цієї сторінки.'
+    login_manager.login_message_category = 'warning'
+
+    from .views import main_bp
+    from .users import users_bp
+    from .products import products_bp
+    from .posts import post_bp
+
+    app.register_blueprint(main_bp)
+    app.register_blueprint(users_bp, url_prefix='/users')
+    app.register_blueprint(products_bp, url_prefix='/product')
+    app.register_blueprint(post_bp, url_prefix='/post')
+
+    @app.errorhandler(404)
+    def not_found(error):
+        # власний опис (abort(404, description=...)) показуємо, стандартний англійський — ні
+        message = None if error.description == NotFound.description else error.description
+        return render_template('404.html', title='Сторінку не знайдено', message=message), 404
+
+    @app.errorhandler(413)
+    def payload_too_large(error):
+        flash('Файл завеликий. Максимальний розмір запиту — 5 МБ.', 'error')
+        return render_template('404.html', title='Файл завеликий', code=413,
+                               message='Завантажений файл перевищує допустимий розмір.'), 413
+
+    return app

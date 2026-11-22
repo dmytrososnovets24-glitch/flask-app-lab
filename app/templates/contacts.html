@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% from 'macros/forms.html' import render_field %}
+{% from 'macros/form_macros.html' import render_field %}
 
 {% block content %}
 <div class="row g-4">
@@ -16,7 +16,7 @@
     <section class="col-lg-7">
         <h2 class="h4">Надіслати повідомлення</h2>
 
-        <form method="post" action="{{ url_for('contacts') }}" novalidate>
+        <form method="post" action="{{ url_for('main.contacts') }}" novalidate>
             {{ form.hidden_tag() }}
             {% if form.errors.get('csrf_token') %}
             <div class="alert alert-danger" role="alert">

@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <section class="col-lg-8">
+        <div class="resume-section account-card">
+            <h2 class="mb-1">Вітаємо, {{ user.username }}!</h2>
+            <p class="lead mb-3">Ви успішно увійшли до свого профілю.</p>
+            <dl class="row mb-0">
+                <dt class="col-sm-4">Ім'я користувача</dt>
+                <dd class="col-sm-8">{{ user.username }}</dd>
+                <dt class="col-sm-4">Email</dt>
+                <dd class="col-sm-8">{{ user.email }}</dd>
+                {% if user.posts is defined %}
+                <dt class="col-sm-4">Постів</dt>
+                <dd class="col-sm-8">{{ user.posts | length }}</dd>
+                {% endif %}
+            </dl>
+            <div class="d-flex flex-wrap gap-2 mt-4">
+                <a class="btn btn-outline-primary" href="{{ url_for('users.users_list') }}">Усі користувачі</a>
+                <a class="btn btn-outline-secondary" href="{{ url_for('users.profile') }}">Кукі та тема</a>
+                <a class="btn btn-outline-danger" href="{{ url_for('users.logout') }}">Вийти</a>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

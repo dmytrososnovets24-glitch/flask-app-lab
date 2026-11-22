@@ -1,6 +1,6 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
     <div class="container">
-        <a class="navbar-brand" href="{{ url_for('home') }}">{{ profile.name.split()[1] }} {{ profile.name.split()[0] }}</a>
+        <a class="navbar-brand" href="{{ url_for('main.home') }}">{{ profile.name.split()[1] }} {{ profile.name.split()[0] }}</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                 data-bs-target="#mainMenu" aria-controls="mainMenu"
                 aria-expanded="false" aria-label="Відкрити меню">
@@ -9,14 +9,14 @@
         <div class="collapse navbar-collapse" id="mainMenu">
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint == 'home' %}active{% endif %}"
-                       href="{{ url_for('home') }}">Головна</a>
+                    <a class="nav-link {% if request.endpoint == 'main.home' %}active{% endif %}"
+                       href="{{ url_for('main.home') }}">Головна</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint == 'resume' %}active{% endif %}"
-                       href="{{ url_for('resume') }}">Резюме</a>
+                    <a class="nav-link {% if request.endpoint == 'main.resume' %}active{% endif %}"
+                       href="{{ url_for('main.resume') }}">Резюме</a>
                 </li>
-                {% if request.endpoint == 'resume' %}
+                {% if request.endpoint == 'main.resume' %}
                 <li class="nav-item"><a class="nav-link" href="#about">Про себе</a></li>
                 <li class="nav-item"><a class="nav-link" href="#education">Освіта</a></li>
                 <li class="nav-item"><a class="nav-link" href="#skills">Навички</a></li>
@@ -28,21 +28,33 @@
                        href="{{ url_for('products.product_list') }}">Товари</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint == 'contacts' %}active{% endif %}"
-                       href="{{ url_for('contacts') }}">Контакти</a>
+                    <a class="nav-link {% if request.blueprint == 'posts' %}active{% endif %}"
+                       href="{{ url_for('posts.all_posts') }}">Пости</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint == 'users.profile' %}active{% endif %}"
-                       href="{{ url_for('users.profile') }}">Профіль</a>
+                    <a class="nav-link {% if request.endpoint == 'main.contacts' %}active{% endif %}"
+                       href="{{ url_for('main.contacts') }}">Контакти</a>
                 </li>
-                {% if session.get('user') %}
+                {% if current_user.is_authenticated %}
                 <li class="nav-item">
-                    <span class="navbar-text ms-lg-2">Ви увійшли як <strong>{{ session['user'] }}</strong></span>
+                    <a class="nav-link {% if request.endpoint == 'users.users_list' %}active{% endif %}"
+                       href="{{ url_for('users.users_list') }}">Користувачі</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint in ('users.account', 'users.profile') %}active{% endif %}"
+                       href="{{ url_for('users.account') }}">Профіль ({{ current_user.username }})</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('users.logout') }}">Вихід</a>
                 </li>
                 {% else %}
                 <li class="nav-item">
                     <a class="nav-link {% if request.endpoint == 'users.login' %}active{% endif %}"
                        href="{{ url_for('users.login') }}">Вхід</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'users.register' %}active{% endif %}"
+                       href="{{ url_for('users.register') }}">Реєстрація</a>
                 </li>
                 {% endif %}
             </ul>

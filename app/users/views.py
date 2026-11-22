@@ -1,13 +1,17 @@
-import hmac
 import re
-from functools import wraps
+from urllib.parse import urlsplit
 
-from flask import (current_app, flash, make_response, redirect,
-                   render_template, request, session, url_for)
+from flask import current_app, flash, make_response, redirect, render_template, request, url_for
+from flask_login import current_user, login_required, login_user, logout_user
+from sqlalchemy.orm import selectinload
+
+from app import db
 
 from . import users_bp
+from .forms import LoginForm, RegistrationForm
+from .models import User
 
-PROTECTED_COOKIES = {'session'}
+PROTECTED_COOKIES = {'session', 'remember_token'}
 COOKIE_KEY_RE = re.compile(r'^[A-Za-z0-9_-]{1,50}$')
 THEMES = ('light', 'dark')
 
@@ -26,43 +30,68 @@ def admin():
     return redirect(to_url)
 
 
-def login_required(view):
-    """Пускає на сторінку лише автентифікованого користувача (з сесії)."""
-    @wraps(view)
-    def wrapped(*args, **kwargs):
-        if not session.get('user'):
-            flash('Для доступу до цієї сторінки потрібно увійти.', 'warning')
-            return redirect(url_for('users.login'))
-        return view(*args, **kwargs)
-    return wrapped
+def safe_next(target):
+    """Повертає адресу з ?next= лише якщо вона веде на цей самий сайт."""
+    if not target or not target.startswith('/') or target.startswith('//'):
+        return None
+    parts = urlsplit(target)
+    return None if parts.scheme or parts.netloc else target
 
 
-def _credentials_valid(username, password):
-    cfg = current_app.config
-    return (hmac.compare_digest(username, cfg['AUTH_USERNAME'])
-            and hmac.compare_digest(password, cfg['AUTH_PASSWORD']))
+@users_bp.route('/register', methods=['GET', 'POST'])
+def register():
+    # авторизований користувач не реєструється вдруге
+    if current_user.is_authenticated:
+        return redirect(url_for('users.account'))
+
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        # 1. дані з форми реєстрації; 2. хеш пароля (Flask-Bcrypt) і збереження в БД
+        user = User(username=form.username.data, email=form.email.data, password=form.password.data)
+        user.hash_password()
+        db.session.add(user)
+        db.session.commit()
+        flash(f'Обліковий запис для {user.username} створено! Тепер можна увійти.', 'success')
+        return redirect(url_for('users.login'))
+    return render_template('users/register.html', form=form, title='Реєстрація')
 
 
 @users_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        password = request.form.get('password', '')
+    if current_user.is_authenticated:
+        return redirect(url_for('users.account'))
 
-        if _credentials_valid(username, password):
-            session['user'] = username
-            flash(f'Вітаємо, {username}! Вхід виконано успішно.', 'success')
-            return redirect(url_for('users.profile'))
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = db.session.scalar(db.select(User).filter_by(email=form.email.data))
+        # перевірка пароля через порівняння хешів
+        if user and user.check_password(form.password.data):
+            # login_user записує id користувача в сесію (рядком)
+            login_user(user, remember=form.remember.data)
+            flash(f'Вітаємо, {user.username}! Вхід виконано успішно.', 'success')
+            return redirect(safe_next(request.args.get('next')) or url_for('users.account'))
+        flash('Неправильний email або пароль.', 'danger')
+    return render_template('users/login.html', form=form, title='Вхід')
 
-        flash('Неправильне ім’я користувача або пароль.', 'error')
-        return redirect(url_for('users.login'))
 
-    return render_template('users/login.html', title='Вхід')
+@users_bp.route('/account')
+@login_required
+def account():
+    # current_user — об'єкт автентифікованого користувача з полями моделі User
+    return render_template('users/account.html', title='Профіль', user=current_user)
 
 
-@users_bp.route('/logout', methods=['POST'])
+@users_bp.route('/', strict_slashes=False)
+@login_required
+def users_list():
+    # пости користувачів завантажуються одним додатковим запитом (без N+1)
+    users = db.session.scalars(db.select(User).options(selectinload(User.posts)).order_by(User.id)).all()
+    return render_template('users/users.html', title='Користувачі', users=users)
+
+
+@users_bp.route('/logout', methods=['GET', 'POST'])
 def logout():
-    session.pop('user', None)
+    logout_user()  # завершення сесії користувача
     flash('Ви вийшли з системи.', 'info')
     return redirect(url_for('users.login'))
 
@@ -73,7 +102,7 @@ def profile():
     theme = request.cookies.get(current_app.config['THEME_COOKIE'], 'light')
     if theme not in THEMES:
         theme = 'light'
-    return render_template('users/profile.html', title='Профіль', user=session['user'],
+    return render_template('users/profile.html', title='Кукі та тема', user=current_user.username,
                            cookies=request.cookies, theme=theme,
                            protected=PROTECTED_COOKIES)
 

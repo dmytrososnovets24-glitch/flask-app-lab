@@ -1,64 +1,57 @@
 import unittest
 
-from app import app
+from app import create_app, db
+from app.users.models import User
+
+EMAIL = "dmytro@example.com"
+PASSWORD = "secret123"
 
 
-class AuthTestCase(unittest.TestCase):
+class LoggedInTestBase(unittest.TestCase):
+    """Кукі й тема доступні лише після входу користувача з БД."""
+
     def setUp(self):
-        app.config["TESTING"] = True
-        self.client = app.test_client()
+        self.app = create_app("testing")
+        self.client = self.app.test_client()
+        with self.app.app_context():
+            db.create_all()
+            user = User(username="dmytro", email=EMAIL, password=PASSWORD)
+            user.hash_password()
+            db.session.add(user)
+            db.session.commit()
 
-    def login(self, username="admin", password="12345", follow=True):
-        return self.client.post("/users/login",
-                                data={"username": username, "password": password},
+    def tearDown(self):
+        with self.app.app_context():
+            db.session.remove()
+            db.drop_all()
+
+    def login(self, email=EMAIL, password=PASSWORD, follow=True):
+        return self.client.post("/users/login", data={"email": email, "password": password},
                                 follow_redirects=follow)
 
-    def test_login_page_opens(self):
-        response = self.client.get("/users/login")
-        self.assertEqual(response.status_code, 200)
-        self.assertIn(b'name="username"', response.data)
-        self.assertIn(b'name="password"', response.data)
 
+class ProfileAccessTestCase(LoggedInTestBase):
     def test_profile_requires_login(self):
         response = self.client.get("/users/profile")
         self.assertEqual(response.status_code, 302)
         self.assertIn("/users/login", response.headers["Location"])
 
-    def test_profile_redirect_shows_flash(self):
-        response = self.client.get("/users/profile", follow_redirects=True)
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("потрібно увійти".encode(), response.data)
-
-    def test_login_success(self):
-        response = self.login()
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("Вхід виконано успішно".encode(), response.data)
-        self.assertIn("Привіт, admin".encode(), response.data)
-        with self.client.session_transaction() as sess:
-            self.assertEqual(sess["user"], "admin")
-
-    def test_login_wrong_password(self):
-        response = self.login(password="wrong")
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("Неправильне".encode(), response.data)
-        with self.client.session_transaction() as sess:
-            self.assertNotIn("user", sess)
-
-    def test_logout(self):
+    def test_profile_after_login(self):
         self.login()
-        response = self.client.post("/users/logout", follow_redirects=True)
+        response = self.client.get("/users/profile")
         self.assertEqual(response.status_code, 200)
-        self.assertIn("Ви вийшли".encode(), response.data)
-        with self.client.session_transaction() as sess:
-            self.assertNotIn("user", sess)
+        self.assertIn("Привіт, dmytro".encode(), response.data)
+
+    def test_profile_closed_after_logout(self):
+        self.login()
+        self.client.get("/users/logout")
         self.assertEqual(self.client.get("/users/profile").status_code, 302)
 
 
-class CookiesAndThemeTestCase(unittest.TestCase):
+class CookiesAndThemeTestCase(LoggedInTestBase):
     def setUp(self):
-        app.config["TESTING"] = True
-        self.client = app.test_client()
-        self.client.post("/users/login", data={"username": "admin", "password": "12345"})
+        super().setUp()
+        self.login(follow=False)
 
     def test_add_cookie_shows_in_table(self):
         response = self.client.post("/users/cookies/add",
@@ -106,7 +99,7 @@ class CookiesAndThemeTestCase(unittest.TestCase):
         self.assertIn("Видалено кукі".encode(), response.data)
         self.assertNotIn(b"<td>a</td>", response.data)
         self.assertNotIn(b"<td>b</td>", response.data)
-        self.assertIn("Привіт, admin".encode(), response.data)
+        self.assertIn("Привіт, dmytro".encode(), response.data)
 
     def test_theme_default_is_light(self):
         response = self.client.get("/users/profile")

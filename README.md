@@ -4,7 +4,7 @@
 **Курс:** Вебпрограмування мовою Python
 **Розгорнутий сайт:** https://flask-app-sosnovets.onrender.com/
 
-Кожна лабораторна виконана у власній гілці, кожна наступна створена з попередньої. Гілка `main` містить усі роботи (лаби 3–5 злиті) і розгортається на Render.
+Кожна лабораторна виконана у власній гілці, кожна наступна створена з попередньої. Гілка `main` містить усі роботи (лаби 1–9) і розгортається на Render.
 
 | Лаба | Тема | Гілка |
 |---|---|---|
@@ -13,8 +13,25 @@
 | 3 | Модульна структура, Blueprints, unittest | [`lab3`](../../tree/lab3) |
 | 4 | Сесії та кукі, flash, кольорова схема | [`lab4`](../../tree/lab4) |
 | 5 | WTF-форми, TinyDB, CRUD товарів | [`lab5`](../../tree/lab5) |
+| 6 | ORM, SQLAlchemy, CRUD постів, міграції | [`lab6`](../../tree/lab6) |
+| 7 | Зв'язки, робота з міграціями (Product, Category) | [`lab7`](../../tree/lab7) |
+| 8 | ORM, зв'язки між моделями (User, Post, Tag), оптимізація запитів | [`lab8`](../../tree/lab8) |
+| 9 | Реєстрація і вхід користувачів, Flask-Bcrypt, Flask-Login | [`lab9`](../../tree/lab9) |
 
 У кожній гілці є власний `README.md` зі звітом і скриншотами.
+
+## Запуск поточної версії
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+copy .env.example .env
+flask db upgrade
+flask run                                  # http://127.0.0.1:8080
+python -m unittest discover tests -v
+```
+
+Починаючи з лабораторної №6 застосунок створюється фабрикою `create_app()`, точка входу — `run.py`. На Render: Build Command `pip install -r requirements.txt`, Start Command `flask db upgrade && gunicorn run:app`.
 
 ---
 

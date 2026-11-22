@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block css %}
+<link rel="stylesheet" href="{{ url_for('.static', filename='css/posts.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <section class="col-lg-7">
+        <div class="resume-section post-delete text-center">
+            <h2>Видалити пост?</h2>
+            <p class="lead">Ви дійсно хочете видалити пост <strong>«{{ post.title }}»</strong>?</p>
+            <p class="text-muted">Цю дію не можна скасувати.</p>
+
+            <form method="post" action="{{ url_for('.delete_post', post_id=post.id) }}"
+                  class="d-flex flex-wrap justify-content-center gap-2">
+                {{ form.hidden_tag() }}
+                {{ form.submit(class='btn btn-danger') }}
+                <a class="btn btn-outline-secondary" href="{{ url_for('.detail_post', post_id=post.id) }}">Скасувати</a>
+            </form>
+        </div>
+    </section>
+</div>
+{% endblock %}
