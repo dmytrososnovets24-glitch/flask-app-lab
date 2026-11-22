@@ -22,6 +22,7 @@
                 <p class="post-card__meta">
                     <span class="badge post-badge post-badge--{{ post.category or 'other' }}">{{ post.category | category_label }}</span>
                     <time datetime="{{ post.posted.isoformat() }}">{{ post.posted.strftime('%d.%m.%Y %H:%M') }}</time>
+                    {% if post.user %}<span class="post-card__author">{{ post.user.username }}</span>{% endif %}
                 </p>
                 <p class="card-text flex-grow-1">{{ post.content[:100] }}{% if post.content | length > 100 %}…{% endif %}</p>
                 <a class="btn btn-outline-primary btn-sm align-self-start"

@@ -10,7 +10,7 @@
     <p class="post-card__meta">
         <span class="badge post-badge post-badge--{{ post.category or 'other' }}">{{ post.category | category_label }}</span>
         <time datetime="{{ post.posted.isoformat() }}">{{ post.posted.strftime('%d.%m.%Y %H:%M') }}</time>
-        <span>Автор: <strong>{{ post.author or 'Anonymous' }}</strong></span>
+        <span>Автор: <strong>{{ post.user.username if post.user else '—' }}</strong></span>
         {% if not post.is_active %}<span class="badge text-bg-secondary">неактивний</span>{% endif %}
     </p>
     <p class="post-detail__content">{{ post.content }}</p>

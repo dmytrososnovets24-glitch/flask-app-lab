@@ -3,6 +3,7 @@ from datetime import datetime
 
 from app import create_app, db
 from app.posts.models import Post
+from app.users.models import User
 
 VALID = {
     "title": "My first post",
@@ -39,6 +40,13 @@ class PostTestBase(unittest.TestCase):
             db.session.commit()
             return post.id
 
+    def add_user(self, username="dmytro"):
+        with self.app.app_context():
+            user = User(username=username, email=f"{username}@example.com", password="pass")
+            db.session.add(user)
+            db.session.commit()
+            return user.id
+
     def get_post(self, post_id):
         with self.app.app_context():
             return db.session.get(Post, post_id)
@@ -58,7 +66,7 @@ class PostModelTests(PostTestBase):
         post = self.get_post(self.add_post())
         self.assertEqual(post.category, "other")
         self.assertTrue(post.is_active)
-        self.assertEqual(post.author, "Anonymous")
+        self.assertIsNone(post.user_id)  # автора за замовчуванням немає
         self.assertIsInstance(post.posted, datetime)
 
     def test_repr(self):
@@ -96,15 +104,9 @@ class PostCreateTests(PostTestBase):
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response.headers["Location"].endswith("/post"))
 
-    def test_author_is_anonymous_without_session(self):
+    def test_new_post_has_no_author_field(self):
         self.create()
-        self.assertEqual(self.all_posts()[0].author, "Anonymous")
-
-    def test_author_is_user_from_session(self):
-        with self.client.session_transaction() as sess:
-            sess["user"] = "admin"
-        self.create()
-        self.assertEqual(self.all_posts()[0].author, "admin")
+        self.assertFalse(hasattr(self.all_posts()[0], "author"))
 
     def test_unchecked_is_active_creates_hidden_post(self):
         self.create(is_active=None)
@@ -179,7 +181,7 @@ class PostReadTests(PostTestBase):
         self.assertNotIn("TAIL", page)
 
     def test_detail_shows_full_post(self):
-        post_id = self.add_post(title="Detailed", content="b" * 100 + "TAIL", author="dmytro",
+        post_id = self.add_post(title="Detailed", content="b" * 100 + "TAIL", user_id=self.add_user("dmytro"),
                                 category="news", posted=datetime(2026, 11, 5, 14, 0))
         page = self.client.get(f"/post/{post_id}").data.decode()
         for text in ("Detailed", "TAIL", "dmytro", "Новина", "05.11.2026 14:00",
@@ -210,7 +212,8 @@ class PostUpdateTests(PostTestBase):
         self.assertRegex(page, r'<option selected value="tech">')
 
     def test_update_post(self):
-        post_id = self.add_post(title="Docker", author="admin")
+        user_id = self.add_user("andrii")
+        post_id = self.add_post(title="Docker", user_id=user_id)
         response = self.client.post(f"/post/{post_id}/update", data={
             "title": "Docker Update", "content": "New content", "is_active": "y",
             "publish_date": "2026-11-11T08:15", "category": "publication"})
@@ -221,7 +224,7 @@ class PostUpdateTests(PostTestBase):
         self.assertEqual((post.title, post.content, post.category),
                          ("Docker Update", "New content", "publication"))
         self.assertEqual(post.posted, datetime(2026, 11, 11, 8, 15))
-        self.assertEqual(post.author, "admin")  # автор не змінюється
+        self.assertEqual(post.user_id, user_id)  # автор не змінюється
         self.assertEqual(len(self.all_posts()), 1)
         self.assertIn("Пост оновлено".encode(), self.client.get(f"/post/{post_id}").data)
 

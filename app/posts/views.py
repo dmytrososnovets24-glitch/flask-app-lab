@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from flask import flash, redirect, render_template, request, session, url_for
+from flask import flash, redirect, render_template, request, url_for
 
 from app import db
 
@@ -38,8 +38,7 @@ def create_post():
     form = PostForm()
 
     if form.validate_on_submit():
-        # автор — користувач із сесії, інакше Anonymous
-        post = Post(author=(session.get('user') or 'Anonymous')[:20])
+        post = Post()
         form.populate_obj(post)  # title, content, is_active, category
         post.posted = form.publish_date.data or datetime.now()
         db.session.add(post)
