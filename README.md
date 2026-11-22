@@ -87,7 +87,7 @@ def register():
 - **Захищені сторінки**: перенаправлення гостя з повідомленням, список користувачів і повідомлення для порожнього списку, автор нового поста за замовчуванням.
 - **CSRF**: токен у формах, POST без токена відхиляється.
 - Тести лабораторної №4 (`tests/test_auth_cookies.py`) переписано на вхід користувача з БД.
-- Усього 209 тестів, усі проходять. Повний вивід: [docs/test_results.txt](docs/test_results.txt).
+- Усього 210 тестів, усі проходять. Повний вивід: [docs/test_results.txt](docs/test_results.txt).
 
 ## Скриншоти
 
@@ -131,7 +131,7 @@ def register():
 ![login_required](screenshots/lab9/09_login_required_redirect.jpg)
 
 ### Частина 3. Тести
-**`python -m unittest tests.test_auth -v` і `python -m unittest discover tests` — 209 тестів, усі проходять**
+**`python -m unittest tests.test_auth -v` і `python -m unittest discover tests` — 210 тестів, усі проходять**
 
 ![Тести](screenshots/lab9/11_tests.png)
 

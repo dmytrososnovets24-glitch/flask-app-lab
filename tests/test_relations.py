@@ -22,12 +22,19 @@ class RelationTestBase(unittest.TestCase):
         db.drop_all()
         self.ctx.pop()
 
+    def default_author(self):
+        if not hasattr(self, "_author"):
+            self._author = self.user("author")
+        return self._author
+
     def user(self, username):
         user = User(username=username, email=f"{username}@example.com", password="pass")
         db.session.add(user)
         return user
 
     def post(self, title, user=None, tags=()):
+        if user is None:  # пост не може бути без автора
+            user = self.default_author()
         post = Post(title=title, content=f"Text of {title}", user=user, tags=list(tags))
         db.session.add(post)
         return post
@@ -54,11 +61,10 @@ class UserPostRelationTests(RelationTestBase):
         db.session.commit()
         self.assertEqual(post.user_id, dmytro.id)
 
-    def test_post_without_user(self):
-        post = self.post("Orphan")
-        db.session.commit()
-        self.assertIsNone(post.user_id)
-        self.assertIsNone(post.user)
+    def test_post_requires_user(self):
+        db.session.add(Post(title="Orphan", content="text"))  # user_id NOT NULL
+        with self.assertRaises(IntegrityError):
+            db.session.commit()
 
     def test_deleting_user_deletes_posts(self):
         dmytro, andrii = self.user("dmytro"), self.user("andrii")

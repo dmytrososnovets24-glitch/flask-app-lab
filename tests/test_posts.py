@@ -1,6 +1,8 @@
 import unittest
 from datetime import datetime
 
+from sqlalchemy.exc import IntegrityError
+
 from app import create_app, db
 from app.posts.models import Post, Tag
 from app.users.models import User
@@ -35,7 +37,7 @@ class PostTestBase(unittest.TestCase):
 
     # --- допоміжні методи ---
     def add_post(self, **fields):
-        data = {"title": "Existing post", "content": "Some content", **fields}
+        data = {"title": "Existing post", "content": "Some content", "user_id": self.user_id, **fields}
         with self.app.app_context():
             post = Post(**data)
             db.session.add(post)
@@ -87,8 +89,14 @@ class PostModelTests(PostTestBase):
         post = self.get_post(self.add_post())
         self.assertEqual(post.category, "other")
         self.assertTrue(post.is_active)
-        self.assertIsNone(post.user_id)  # автора за замовчуванням немає
+        self.assertEqual(post.user_id, self.user_id)
         self.assertIsInstance(post.posted, datetime)
+
+    def test_post_requires_author(self):
+        with self.app.app_context():
+            db.session.add(Post(title="No author", content="text"))
+            with self.assertRaises(IntegrityError):
+                db.session.commit()
 
     def test_repr(self):
         post = self.get_post(self.add_post(title="Hello"))

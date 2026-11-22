@@ -96,6 +96,7 @@ test_delete_not_found (test_posts.PostDeleteTests.test_delete_not_found) ... ok
 test_delete_post (test_posts.PostDeleteTests.test_delete_post) ... ok
 test_delete_post_keeps_tags (test_posts.PostDeleteTests.test_delete_post_keeps_tags) ... ok
 test_defaults (test_posts.PostModelTests.test_defaults) ... ok
+test_post_requires_author (test_posts.PostModelTests.test_post_requires_author) ... ok
 test_repr (test_posts.PostModelTests.test_repr) ... ok
 test_detail_not_found (test_posts.PostReadTests.test_detail_not_found) ... ok
 test_detail_shows_full_post (test_posts.PostReadTests.test_detail_shows_full_post) ... ok
@@ -199,7 +200,7 @@ test_tag_repr (test_relations.TagRelationTests.test_tag_repr) ... ok
 test_tags_of_post_and_posts_of_tag (test_relations.TagRelationTests.test_tags_of_post_and_posts_of_tag) ... ok
 test_back_populates_both_sides (test_relations.UserPostRelationTests.test_back_populates_both_sides) ... ok
 test_deleting_user_deletes_posts (test_relations.UserPostRelationTests.test_deleting_user_deletes_posts) ... ok
-test_post_without_user (test_relations.UserPostRelationTests.test_post_without_user) ... ok
+test_post_requires_user (test_relations.UserPostRelationTests.test_post_requires_user) ... ok
 test_posts_of_user (test_relations.UserPostRelationTests.test_posts_of_user) ... ok
 test_user_repr (test_relations.UserPostRelationTests.test_user_repr) ... ok
 test_username_and_email_are_unique (test_relations.UserPostRelationTests.test_username_and_email_are_unique) ... ok
@@ -213,6 +214,6 @@ test_greetings_without_age (test_user_bp.FlaskAppTestCase.test_greetings_without
 Без параметра age сторінка все одно відкривається. ... ok
 
 ----------------------------------------------------------------------
-Ran 209 tests in 4.170s
+Ran 210 tests in 4.460s
 
 OK
