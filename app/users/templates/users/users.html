@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="resume-section">
+    <h2>Список користувачів ({{ users | length }})</h2>
+    {% if users %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle users-table mb-0">
+            <thead>
+                <tr><th>Id</th><th>Ім'я користувача</th><th>Email</th><th class="text-end">Постів</th></tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.email }}</td>
+                    <td class="text-end">{{ user.posts | length }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-muted mb-0">Зареєстрованих користувачів поки немає.</p>
+    {% endif %}
+</section>
+{% endblock %}

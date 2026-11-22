@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app import db
+from app import bcrypt, db
 
 if TYPE_CHECKING:
     from app.posts.models import Post
@@ -22,3 +22,14 @@ class User(db.Model):
 
     def __repr__(self) -> str:
         return f"User({self.username!r}, {self.email!r})"
+
+    def hash_password(self):
+        """Замінює пароль у відкритому вигляді його bcrypt-хешем."""
+        self.password = bcrypt.generate_password_hash(self.password).decode('utf-8')
+
+    def check_password(self, password):
+        """Порівнює пароль із хешем, збереженим у БД."""
+        try:
+            return bcrypt.check_password_hash(self.password, password)
+        except ValueError:  # у БД не bcrypt-хеш (старі записи) або задовгий пароль
+            return False

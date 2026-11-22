@@ -35,18 +35,26 @@
                     <a class="nav-link {% if request.endpoint == 'main.contacts' %}active{% endif %}"
                        href="{{ url_for('main.contacts') }}">Контакти</a>
                 </li>
+                {% if session.get('user_id') %}
                 <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint == 'users.profile' %}active{% endif %}"
-                       href="{{ url_for('users.profile') }}">Профіль</a>
+                    <a class="nav-link {% if request.endpoint == 'users.users_list' %}active{% endif %}"
+                       href="{{ url_for('users.users_list') }}">Користувачі</a>
                 </li>
-                {% if session.get('user') %}
                 <li class="nav-item">
-                    <span class="navbar-text ms-lg-2">Ви увійшли як <strong>{{ session['user'] }}</strong></span>
+                    <a class="nav-link {% if request.endpoint in ('users.account', 'users.profile') %}active{% endif %}"
+                       href="{{ url_for('users.account') }}">Профіль ({{ session['username'] }})</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('users.logout') }}">Вихід</a>
                 </li>
                 {% else %}
                 <li class="nav-item">
                     <a class="nav-link {% if request.endpoint == 'users.login' %}active{% endif %}"
                        href="{{ url_for('users.login') }}">Вхід</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'users.register' %}active{% endif %}"
+                       href="{{ url_for('users.register') }}">Реєстрація</a>
                 </li>
                 {% endif %}
             </ul>

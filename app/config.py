@@ -20,10 +20,6 @@ class Config:
     # журнал SQL-запитів; задається до ініціалізації розширення (SQLALCHEMY_ECHO=1 у змінних середовища)
     SQLALCHEMY_ECHO = os.environ.get('SQLALCHEMY_ECHO', '0') == '1'
 
-    # заглушка для автентифікації (без бази даних)
-    AUTH_USERNAME = 'admin'
-    AUTH_PASSWORD = '12345'
-
     THEME_COOKIE = 'theme'
     THEME_MAX_AGE = 60 * 60 * 24 * 30  # 30 днів
 
@@ -43,6 +39,7 @@ class TestingConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'  # окрема база в пам'яті для тестів
     WTF_CSRF_ENABLED = False
+    BCRYPT_LOG_ROUNDS = 4  # швидше хешування в тестах
 
 
 class ProductionConfig(Config):
