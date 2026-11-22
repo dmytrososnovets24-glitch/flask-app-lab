@@ -1,4 +1,5 @@
 import unittest
+import warnings
 
 from flask_login import current_user
 
@@ -200,7 +201,10 @@ class LoginLogoutTests(AuthTestBase):
         self.assertIn("Неправильний email або пароль".encode(), response.data)
 
     def test_remember_me_sets_cookie(self):
-        response = self.login(remember="y")
+        with warnings.catch_warnings():
+            # Flask-Login 0.6.3 сам викликає datetime.utcnow() для кукі remember_token
+            warnings.filterwarnings("ignore", category=DeprecationWarning, module="flask_login")
+            response = self.login(remember="y")
         cookies = response.headers.getlist("Set-Cookie")
         self.assertTrue(any(c.startswith("remember_token=") for c in cookies))
 

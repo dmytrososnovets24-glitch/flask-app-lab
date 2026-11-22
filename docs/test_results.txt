@@ -1,9 +1,40 @@
-test_login_page_opens (test_auth_cookies.AuthTestCase.test_login_page_opens) ... ok
-test_login_success (test_auth_cookies.AuthTestCase.test_login_success) ... ok
-test_login_wrong_password (test_auth_cookies.AuthTestCase.test_login_wrong_password) ... ok
-test_logout (test_auth_cookies.AuthTestCase.test_logout) ... ok
-test_profile_redirect_shows_flash (test_auth_cookies.AuthTestCase.test_profile_redirect_shows_flash) ... ok
-test_profile_requires_login (test_auth_cookies.AuthTestCase.test_profile_requires_login) ... ok
+test_forms_contain_csrf_token (test_auth.CsrfTests.test_forms_contain_csrf_token) ... ok
+test_login_without_token_is_rejected (test_auth.CsrfTests.test_login_without_token_is_rejected) ... ok
+test_register_without_token_is_rejected (test_auth.CsrfTests.test_register_without_token_is_rejected) ... ok
+test_account_shows_user_data (test_auth.LoginLogoutTests.test_account_shows_user_data) ... ok
+test_authenticated_user_is_redirected_from_login (test_auth.LoginLogoutTests.test_authenticated_user_is_redirected_from_login) ... ok
+test_current_user_after_login (test_auth.LoginLogoutTests.test_current_user_after_login) ... ok
+test_login_follows_safe_next (test_auth.LoginLogoutTests.test_login_follows_safe_next) ... ok
+test_login_ignores_external_next (test_auth.LoginLogoutTests.test_login_ignores_external_next) ... ok
+test_login_success_redirects_to_account (test_auth.LoginLogoutTests.test_login_success_redirects_to_account) ... ok
+test_logout (test_auth.LoginLogoutTests.test_logout) ... ok
+test_menu_for_signed_in_user (test_auth.LoginLogoutTests.test_menu_for_signed_in_user) ... ok
+test_registered_user_can_login (test_auth.LoginLogoutTests.test_registered_user_can_login) ... ok
+test_remember_me_sets_cookie (test_auth.LoginLogoutTests.test_remember_me_sets_cookie) ... ok
+test_unknown_email (test_auth.LoginLogoutTests.test_unknown_email) ... ok
+test_user_with_plain_password_cannot_login (test_auth.LoginLogoutTests.test_user_with_plain_password_cannot_login) ... ok
+test_without_remember_me_no_cookie (test_auth.LoginLogoutTests.test_without_remember_me_no_cookie) ... ok
+test_wrong_password (test_auth.LoginLogoutTests.test_wrong_password) ... ok
+test_new_post_author_defaults_to_current_user (test_auth.ProtectedPagesTests.test_new_post_author_defaults_to_current_user) ... ok
+test_pages_redirect_guest_to_login (test_auth.ProtectedPagesTests.test_pages_redirect_guest_to_login) ... ok
+test_redirect_shows_message (test_auth.ProtectedPagesTests.test_redirect_shows_message) ... ok
+test_users_list_empty_message (test_auth.ProtectedPagesTests.test_users_list_empty_message) ... ok
+test_users_list_with_count (test_auth.ProtectedPagesTests.test_users_list_with_count) ... ok
+test_authenticated_user_is_redirected_from_register (test_auth.RegistrationTests.test_authenticated_user_is_redirected_from_register) ... ok
+test_email_is_normalized (test_auth.RegistrationTests.test_email_is_normalized) ... ok
+test_existing_email_is_rejected (test_auth.RegistrationTests.test_existing_email_is_rejected) ... ok
+test_existing_username_is_rejected (test_auth.RegistrationTests.test_existing_username_is_rejected) ... ok
+test_invalid_email_is_rejected (test_auth.RegistrationTests.test_invalid_email_is_rejected) ... ok
+test_password_too_short (test_auth.RegistrationTests.test_password_too_short) ... ok
+test_passwords_must_match (test_auth.RegistrationTests.test_passwords_must_match) ... ok
+test_registration_saves_user_with_hashed_password (test_auth.RegistrationTests.test_registration_saves_user_with_hashed_password) ... ok
+test_registration_shows_success_message (test_auth.RegistrationTests.test_registration_shows_success_message) ... ok
+test_required_fields (test_auth.RegistrationTests.test_required_fields) ... ok
+test_username_characters (test_auth.RegistrationTests.test_username_characters) ... ok
+test_username_length (test_auth.RegistrationTests.test_username_length) ... ok
+test_login_page_loads (test_auth.ViewsTests.test_login_page_loads) ... ok
+test_menu_for_guest (test_auth.ViewsTests.test_menu_for_guest) ... ok
+test_register_page_loads (test_auth.ViewsTests.test_register_page_loads) ... ok
 test_add_cookie_invalid_key (test_auth_cookies.CookiesAndThemeTestCase.test_add_cookie_invalid_key) ... ok
 test_add_cookie_invalid_max_age (test_auth_cookies.CookiesAndThemeTestCase.test_add_cookie_invalid_max_age) ... ok
 test_add_cookie_shows_in_table (test_auth_cookies.CookiesAndThemeTestCase.test_add_cookie_shows_in_table) ... ok
@@ -15,6 +46,9 @@ test_theme_can_switch_back (test_auth_cookies.CookiesAndThemeTestCase.test_theme
 test_theme_dark_is_saved (test_auth_cookies.CookiesAndThemeTestCase.test_theme_dark_is_saved) ... ok
 test_theme_default_is_light (test_auth_cookies.CookiesAndThemeTestCase.test_theme_default_is_light) ... ok
 test_unknown_theme (test_auth_cookies.CookiesAndThemeTestCase.test_unknown_theme) ... ok
+test_profile_after_login (test_auth_cookies.ProfileAccessTestCase.test_profile_after_login) ... ok
+test_profile_closed_after_logout (test_auth_cookies.ProfileAccessTestCase.test_profile_closed_after_logout) ... ok
+test_profile_requires_login (test_auth_cookies.ProfileAccessTestCase.test_profile_requires_login) ... ok
 test_form_contains_csrf_token (test_contact_form.ContactCsrfTestCase.test_form_contains_csrf_token) ... ok
 test_post_without_token_is_rejected (test_contact_form.ContactCsrfTestCase.test_post_without_token_is_rejected) ... ok
 test_error_flash_shown_on_invalid_submit (test_contact_form.ContactFormTestCase.test_error_flash_shown_on_invalid_submit) ... ok
@@ -179,6 +213,6 @@ test_greetings_without_age (test_user_bp.FlaskAppTestCase.test_greetings_without
 Без параметра age сторінка все одно відкривається. ... ok
 
 ----------------------------------------------------------------------
-Ran 175 tests in 2.670s
+Ran 209 tests in 4.170s
 
 OK
