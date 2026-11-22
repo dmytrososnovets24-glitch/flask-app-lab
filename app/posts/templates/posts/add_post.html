@@ -26,6 +26,8 @@
                     <div class="col-md-4">{{ render_field(form.category) }}</div>
                     <div class="col-md-4">{{ render_field(form.author_id) }}</div>
                 </div>
+                {{ render_field(form.tags) }}
+                <p class="form-text mt-n2 mb-3">Кілька тегів можна вибрати з натиснутою клавішею Ctrl.</p>
 
                 <div class="d-flex flex-wrap gap-2">
                     {{ form.submit(class='btn btn-primary') }}

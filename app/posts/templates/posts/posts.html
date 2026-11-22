@@ -6,7 +6,11 @@
 
 {% block content %}
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
-    <p class="mb-0 text-muted">Усього постів: <strong>{{ posts | length }}</strong></p>
+    <p class="mb-0 text-muted">
+        {% if tag %}Пости з тегом <span class="post-tag post-tag--sm">#{{ tag }}</span>:{% else %}Усього постів:{% endif %}
+        <strong>{{ posts | length }}</strong>
+        {% if tag %}<a class="ms-2" href="{{ url_for('.all_posts') }}">усі пости</a>{% endif %}
+    </p>
     <a class="btn btn-primary" href="{{ url_for('.create_post') }}">+ Додати пост</a>
 </div>
 
@@ -25,6 +29,11 @@
                     {% if post.user %}<span class="post-card__author">{{ post.user.username }}</span>{% endif %}
                 </p>
                 <p class="card-text flex-grow-1">{{ post.content[:100] }}{% if post.content | length > 100 %}…{% endif %}</p>
+                {% if post.tags %}
+                <p class="post-tags post-tags--card">
+                    {% for tag in post.tags %}<a class="post-tag post-tag--sm" href="{{ url_for('.all_posts', tag=tag.name) }}">#{{ tag.name }}</a>{% endfor %}
+                </p>
+                {% endif %}
                 <a class="btn btn-outline-primary btn-sm align-self-start"
                    href="{{ url_for('.detail_post', post_id=post.id) }}">Переглянути</a>
             </div>

@@ -1,15 +1,15 @@
 from datetime import datetime
 
 from flask_wtf import FlaskForm
-from wtforms import (BooleanField, DateTimeLocalField, SelectField, StringField,
-                     SubmitField, TextAreaField)
+from wtforms import (BooleanField, DateTimeLocalField, SelectField, SelectMultipleField,
+                     StringField, SubmitField, TextAreaField)
 from wtforms.fields.choices import SelectChoice
 from wtforms.validators import DataRequired, InputRequired, Length, Optional, ValidationError
 
 from app import db
 from app.users.models import User
 
-from .models import CATEGORIES
+from .models import CATEGORIES, Tag
 
 CATEGORY_LABELS = {
     'news': 'Новина',
@@ -52,6 +52,14 @@ class PostForm(FlaskForm):
         validate_choice=False,  # перевірку виконує validate_author_id з українським повідомленням
         validators=[InputRequired(message='Оберіть автора.')],
     )
+    # декілька тегів поста (зв'язок багато до багатьох)
+    tags = SelectMultipleField(
+        'Теги',
+        coerce=int,
+        validate_choice=False,  # перевірку виконує validate_tags
+        validators=[Optional()],
+        render_kw={'size': 5},
+    )
     submit = SubmitField('Додати пост')
 
     def __init__(self, *args, **kwargs):
@@ -59,10 +67,17 @@ class PostForm(FlaskForm):
         # список авторів із БД (синтаксис SQLAlchemy 2.0)
         authors = db.session.scalars(db.select(User).order_by(User.id)).all()
         self.author_id.choices = [SelectChoice(a.id, a.username) for a in authors]
+        tags = db.session.scalars(db.select(Tag).order_by(Tag.name)).all()
+        self.tags.choices = [SelectChoice(t.id, t.name) for t in tags]
 
     def validate_author_id(self, field):
         if field.data is None or db.session.get(User, field.data) is None:
             raise ValidationError('Оберіть автора зі списку.')
+
+    def validate_tags(self, field):
+        known = {choice.value for choice in field.choices}
+        if any(tag_id not in known for tag_id in field.data or []):
+            raise ValidationError('Оберіть теги зі списку.')
 
 
 class DeletePostForm(FlaskForm):

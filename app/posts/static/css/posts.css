@@ -56,3 +56,50 @@
 .post-delete h2 {
     color: #c92a2a;
 }
+
+/* Теги поста (зв'язок багато до багатьох) */
+.post-tags {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 1rem;
+}
+
+.post-tags--card {
+    margin: 0 0 0.75rem;
+}
+
+.post-tags__label {
+    font-weight: 600;
+    color: #495057;
+}
+
+.post-tag {
+    display: inline-block;
+    padding: 0.2rem 0.7rem;
+    border: 1px solid #bac8ff;
+    border-radius: 999px;
+    background-color: #edf2ff;
+    color: #364fc7;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.post-tag:hover,
+.post-tag:focus {
+    background-color: #364fc7;
+    color: #fff;
+}
+
+.post-tag--sm {
+    padding: 0.1rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+.post-card__author::before {
+    content: "\2022";
+    margin-right: 0.5rem;
+}

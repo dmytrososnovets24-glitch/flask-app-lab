@@ -1,12 +1,13 @@
 from datetime import datetime
 
 from flask import flash, redirect, render_template, request, url_for
+from sqlalchemy.orm import joinedload, selectinload
 
 from app import db
 
 from . import post_bp
 from .forms import CATEGORY_LABELS, DeletePostForm, PostForm
-from .models import Post
+from .models import Post, Tag
 
 
 @post_bp.app_template_filter('category_label')
@@ -23,6 +24,9 @@ def fill_post(post, form):
     post.category = form.category.data
     post.posted = form.publish_date.data or post.posted or datetime.now()
     post.user_id = form.author_id.data
+    selected = form.tags.data or []
+    post.tags = list(db.session.scalars(
+        db.select(Tag).where(Tag.id.in_(selected)).order_by(Tag.name))) if selected else []
 
 
 def get_post_or_404(post_id):
@@ -31,10 +35,18 @@ def get_post_or_404(post_id):
 
 @post_bp.route('', strict_slashes=False)
 def all_posts():
-    # лише видимі пости, новіші зверху
-    stmt = db.select(Post).where(Post.is_active.is_(True)).order_by(Post.posted.desc())
+    # лише видимі пости, новіші зверху; автори й теги завантажуються наперед (без N+1)
+    stmt = (
+        db.select(Post)
+        .options(joinedload(Post.user), selectinload(Post.tags))
+        .where(Post.is_active.is_(True))
+        .order_by(Post.posted.desc())
+    )
+    tag = request.args.get('tag', '').strip()
+    if tag:
+        stmt = stmt.where(Post.tags.any(Tag.name == tag))
     posts = db.session.scalars(stmt).all()
-    return render_template('posts/posts.html', title='Пости', posts=posts)
+    return render_template('posts/posts.html', title='Пости', posts=posts, tag=tag)
 
 
 @post_bp.route('/<int:post_id>')
@@ -71,6 +83,7 @@ def update_post(post_id):
         # назви відрізняються (publish_date / posted, author_id / user_id), тому заповнюємо вручну
         form.publish_date.data = post.posted
         form.author_id.data = post.user_id
+        form.tags.data = [tag.id for tag in post.tags]
 
     if form.validate_on_submit():
         fill_post(post, form)  # оновлення об'єкта post даними з форми

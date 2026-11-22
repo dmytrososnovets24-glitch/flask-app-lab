@@ -2,7 +2,7 @@ import unittest
 from datetime import datetime
 
 from app import create_app, db
-from app.posts.models import Post
+from app.posts.models import Post, Tag
 from app.users.models import User
 
 VALID = {
@@ -49,6 +49,25 @@ class PostTestBase(unittest.TestCase):
             db.session.commit()
             return user.id
 
+    def add_tag(self, name):
+        with self.app.app_context():
+            tag = Tag(name=name)
+            db.session.add(tag)
+            db.session.commit()
+            return tag.id
+
+    def tag_names(self, post_id):
+        with self.app.app_context():
+            return [t.name for t in db.session.get(Post, post_id).tags]
+
+    def add_post_with_tags(self, names, **fields):
+        post_id = self.add_post(**fields)
+        with self.app.app_context():
+            post = db.session.get(Post, post_id)
+            post.tags = list(db.session.scalars(db.select(Tag).where(Tag.name.in_(names))))
+            db.session.commit()
+        return post_id
+
     def get_post(self, post_id):
         with self.app.app_context():
             return db.session.get(Post, post_id)
@@ -86,6 +105,26 @@ class PostCreateTests(PostTestBase):
                      b'type="submit"'):
             self.assertIn(name, response.data)
         self.assertIn(b'<option value="1">dmytro</option>', response.data)
+
+    def test_create_form_has_tags_multiselect(self):
+        self.add_tag("Flask")
+        page = self.client.get("/post/create").data.decode()
+        self.assertRegex(page, r'<select[^>]*multiple[^>]*name="tags"')
+        self.assertIn('>Flask</option>', page)
+
+    def test_create_post_with_several_tags(self):
+        flask, orm = self.add_tag("Flask"), self.add_tag("SQLAlchemy")
+        self.add_tag("Web")
+        self.create(tags=[str(flask), str(orm)])
+        self.assertEqual(sorted(self.tag_names(self.all_posts()[0].id)), ["Flask", "SQLAlchemy"])
+
+    def test_create_post_without_tags(self):
+        self.add_tag("Flask")
+        self.create()
+        self.assertEqual(self.tag_names(self.all_posts()[0].id), [])
+
+    def test_unknown_tag_is_rejected(self):
+        self.assert_rejected(self.create(tags=["99"]), "Оберіть теги зі списку")
 
     def test_author_choices_come_from_db(self):
         self.add_user("andrii")
@@ -210,6 +249,35 @@ class PostReadTests(PostTestBase):
                      f"/post/{post_id}/update", f"/post/{post_id}/delete"):
             self.assertIn(text, page)
 
+    def test_detail_shows_styled_tags(self):
+        self.add_tag("Flask")
+        self.add_tag("Python")
+        post_id = self.add_post_with_tags(["Flask", "Python"], title="Tagged")
+        page = self.client.get(f"/post/{post_id}").data.decode()
+        self.assertIn('class="post-tags"', page)
+        self.assertIn('class="post-tag" href="/post?tag=Flask">#Flask</a>', page)
+        self.assertIn("#Python", page)
+
+    def test_detail_without_tags_has_no_tag_block(self):
+        post_id = self.add_post()
+        self.assertNotIn('class="post-tags"', self.client.get(f"/post/{post_id}").data.decode())
+
+    def test_list_filtered_by_tag(self):
+        self.add_tag("Flask")
+        self.add_post_with_tags(["Flask"], title="About Flask")
+        self.add_post(title="About Docker")
+        page = self.client.get("/post?tag=Flask").data.decode()
+        self.assertIn("About Flask", page)
+        self.assertNotIn("About Docker", page)
+        self.assertIn("Пости з тегом", page)
+
+    def test_list_shows_author_and_tags(self):
+        self.add_tag("Flask")
+        self.add_post_with_tags(["Flask"], title="About Flask", user_id=self.user_id)
+        page = self.client.get("/post").data.decode()
+        self.assertIn('post-card__author">dmytro', page)
+        self.assertIn("#Flask", page)
+
     def test_detail_not_found(self):
         response = self.client.get("/post/999")
         self.assertEqual(response.status_code, 404)
@@ -232,6 +300,24 @@ class PostUpdateTests(PostTestBase):
         self.assertIn("Containers", page)
         self.assertIn('value="2026-11-05T14:00"', page)
         self.assertRegex(page, r'<option selected value="tech">')
+
+    def test_update_form_preselects_tags(self):
+        flask = self.add_tag("Flask")
+        self.add_tag("Web")
+        post_id = self.add_post_with_tags(["Flask"])
+        page = self.client.get(f"/post/{post_id}/update").data.decode()
+        self.assertIn(f'<option selected value="{flask}">Flask</option>', page)
+        self.assertRegex(page, r'<option value="\d+">Web</option>')
+
+    def test_update_replaces_tags(self):
+        self.add_tag("Flask")
+        web = self.add_tag("Web")
+        post_id = self.add_post_with_tags(["Flask"])
+        self.client.post(f"/post/{post_id}/update", data={
+            "title": "Existing post", "content": "Some content", "is_active": "y",
+            "publish_date": "2026-11-11T08:15", "category": "other", "author_id": "1",
+            "tags": [str(web)]})
+        self.assertEqual(self.tag_names(post_id), ["Web"])
 
     def test_update_form_selects_current_author(self):
         andrii = self.add_user("andrii")
@@ -304,6 +390,14 @@ class PostDeleteTests(PostTestBase):
         self.assertIsNotNone(self.get_post(other_id))
         self.assertIn("Пост успішно видалено".encode(), self.client.get("/post").data)
         self.assertEqual(self.client.get(f"/post/{post_id}").status_code, 404)
+
+    def test_delete_post_keeps_tags(self):
+        flask = self.add_tag("Flask")
+        post_id = self.add_post_with_tags(["Flask"])
+        self.client.post(f"/post/{post_id}/delete")
+        with self.app.app_context():
+            self.assertEqual(db.session.get(Tag, flask).posts, [])
+            self.assertEqual(db.session.execute(db.text("SELECT count(*) FROM post_tags")).scalar(), 0)
 
     def test_delete_not_found(self):
         self.assertEqual(self.client.get("/post/77/delete").status_code, 404)
