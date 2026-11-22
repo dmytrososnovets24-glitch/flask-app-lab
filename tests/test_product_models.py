@@ -151,7 +151,8 @@ class MigrationChainTests(unittest.TestCase):
     def test_upgrade_builds_schema(self):
         upgrade(directory=MIGRATIONS_DIR)
         inspector = inspect(db.engine)
-        self.assertTrue({"posts", "products", "categories"} <= set(inspector.get_table_names()))
+        self.assertTrue({"posts", "products", "categories", "users", "tags", "post_tags"}
+                        <= set(inspector.get_table_names()))
         self.assertEqual(
             [c["name"] for c in inspector.get_columns("products")],
             ["id", "name", "price", "category_id", "active", "created_at"])

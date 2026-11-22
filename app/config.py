@@ -17,6 +17,8 @@ class Config:
     # база даних (відносний шлях SQLite розміщується в теці instance/)
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///data.sqlite')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    # журнал SQL-запитів; задається до ініціалізації розширення (SQLALCHEMY_ECHO=1 у змінних середовища)
+    SQLALCHEMY_ECHO = os.environ.get('SQLALCHEMY_ECHO', '0') == '1'
 
     # заглушка для автентифікації (без бази даних)
     AUTH_USERNAME = 'admin'
