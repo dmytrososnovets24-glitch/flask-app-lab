@@ -1,127 +1,272 @@
-# Лабораторна робота №7. Зв'язки. Робота із міграціями
+# Лабораторна робота №8. ORM. Зв'язки між моделями
 
 **Студент:** Сосновець Дмитро Сергійович, ІПЗ-33
-**Гілка:** [`lab7`](https://github.com/dmytrososnovets24-glitch/flask-app-lab/tree/lab7) (створена з `lab6`)
+**Гілка:** [`lab8`](https://github.com/dmytrososnovets24-glitch/flask-app-lab/tree/lab8) (створена з `lab7`)
 
 ## Мета
-Набути практичних навичок створення моделей із зовнішніми ключами, проведення та відкату міграцій, синхронізації структури бази з моделями, а також виправлення помилок, що виникають під час змін у схемі БД.
-
-Пререквізити (доступ до бази даних, об'єкт `db` класу `SQLAlchemy`, Flask-Migrate) уже налаштовані в проєкті: `app/__init__.py`, `app/config.py`, каталог `migrations/`.
+- Закріпити знання про створення та використання зв'язків між моделями в SQLAlchemy.
+- Навчитися працювати з різними типами зв'язків (один-до-багатьох, багато-до-багатьох).
+- Ознайомитися з основними операціями над об'єктами, пов'язаними між собою.
 
 ## Хід роботи
 
-### Частина 1. Початок роботи
-- У блюпринті `products` створено файл `app/products/models.py` з моделлю `Product` (`id`, `name` — String(100), `price` — Float).
-- Команду `flask db init` повторно не виконував: каталог `migrations` у проєкті вже існує, а ця команда запускається лише один раз.
-- `flask db migrate -m "Add Product"` → `flask db upgrade` — у базі з'явилася таблиця `products`.
-- Через `flask shell` додано два товари: `Pc` (700) і `MAC` (500), вибірка `select(Product)` повертає обидва.
+### 1–2. Модель `User` і міграція
+- `app/users/models.py` — модель `User` з полями `id`, `username` (String(20), унікальне), `email` (String(120), унікальне), `password` (String(60)).
+- `flask db migrate -m "Add users table"` → `flask db upgrade`: у БД з'явилася таблиця `users` (ревізія `bfcc170b99fa`).
 
-### Частина 2. Модель `Category`, зв'язок «один до багатьох»
-- Додано модель `Category` (`id`, `name` — String(128), unique) і двосторонній зв'язок: `Category.products` ↔ `Product.category`, зовнішній ключ `Product.category_id → categories.id`.
-- `flask db migrate -m "Add category"` згенерувала рядок `batch_op.create_foreign_key(None, 'categories', ...)`, тому `flask db upgrade` завершилась помилкою:
+### 3–4. Двосторонній зв'язок `Post` ↔ `User`
+- У моделі `Post` видалено поле `author` і додано зовнішній ключ та зв'язок:
+  ```python
+  user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"))
+  user: Mapped[Optional["User"]] = relationship(back_populates="posts")
   ```
-  ValueError: Constraint must have a name
+- У моделі `User`:
+  ```python
+  posts: Mapped[list["Post"]] = relationship(back_populates="user", cascade="all, delete-orphan")
   ```
-- Виправлення: у файлі міграції вказано ім'я обмеження — `batch_op.create_foreign_key('category_id', 'categories', ['category_id'], ['id'])`.
-- Після невдалої спроби в базі залишилась таблиця `categories` (SQLite не відкочує DDL), через що повторний `upgrade` падав з `table categories already exists`. Таблицю видалено вручну, після цього `flask db upgrade` виконалась.
-- `flask db migrate` → `No changes in schema detected`, `flask db check` → `No new upgrade operations detected`.
-- `flask db downgrade` теж не виконувалась (`drop_constraint(None, ...)`). У функції `downgrade()` виправлено на `batch_op.drop_constraint('category_id', type_='foreignkey')`, після чого відкат пройшов: у базі знову лише `products` із двома товарами.
+- `flask db migrate -m "Link posts to users, drop author"` → `flask db upgrade` (ревізія `19b6905f12e6`). Завдяки `naming_convention` з лабораторної №7 обмеження отримало ім'я `fk_posts_user_id_users`, тому міграція застосувалась і відкочується без ручних правок.
+- `user_id` зроблено `Optional` (NULL дозволено): у таблиці вже були пости, а користувачів на момент міграції ще не було, і за пунктом 6 автора отримують лише деякі пости.
 
-### Частина 3. Єдиний стиль іменування обмежень
-- У клас `Base` (`app/__init__.py`) додано `MetaData(naming_convention={...})` з шаблонами для `ix`, `uq`, `ck`, `fk`, `pk`.
-- Відкочений файл першої спроби видалено, виконано `flask db migrate -m "Add category attempt #2"`. Тепер імена генеруються автоматично: `pk_categories`, `uq_categories_name`, `fk_products_category_id_categories`.
-- `flask db upgrade` виконалась без правок файлу міграції, `flask db check` → `No new upgrade operations detected`.
+### 5–7. Користувачі та їхні пости у `flask shell`
+- Додано двох користувачів: `dmytro` (id=1) і `andrii` (id=2).
+- Постам 1 і 3 призначено автора — користувача з id=2.
+- `db.session.get(User, 2).posts` повертає пости 1 і 3, `db.session.get(User, 1).posts` — порожній список.
 
-### Частина 4. Нове поле `active` у моделі `Product`
-- Додано `active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)`.
-- `flask db check` → `ERROR [flask_migrate] Error: New upgrade operations detected: [('add_column', None, 'products', Column('active', Boolean(), ...))]`.
-- `flask db migrate -m "Add active column to products"`, далі `flask db upgrade` завершилась помилкою:
+### 8. Вибір автора у формі поста
+- `PostForm.author_id = SelectField("Автор", coerce=int)`. Список авторів завантажується в `__init__` форми синтаксисом SQLAlchemy 2.0:
+  ```python
+  authors = db.session.scalars(db.select(User).order_by(User.id)).all()
+  self.author_id.choices = [SelectChoice(a.id, a.username) for a in authors]
   ```
-  sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) Cannot add a NOT NULL column with default value NULL
-  [SQL: ALTER TABLE products ADD COLUMN active BOOLEAN NOT NULL]
+- Валідатор `validate_author_id` перевіряє, що вибраний користувач існує в БД. Під час редагування в списку вибрано поточного автора поста.
+
+### 9. Зв'язок «багато до багатьох» `Post` ↔ `Tag`
+- Асоціативна таблиця `post_tags` (`post_id`, `tag_id`, складений первинний ключ) і модель `Tag` (`id`, `name` — унікальне):
+  ```python
+  post_tags = db.Table(
+      'post_tags',
+      db.Column('post_id', db.Integer, db.ForeignKey('posts.id'), primary_key=True),
+      db.Column('tag_id', db.Integer, db.ForeignKey('tags.id'), primary_key=True),
+  )
+  # Post
+  tags: Mapped[list["Tag"]] = relationship(secondary=post_tags, back_populates="posts")
+  # Tag
+  posts: Mapped[list["Post"]] = relationship(secondary=post_tags, back_populates="tags")
   ```
-- У цей момент `flask db check` → `Target database is not up to date`, `flask db current` показує `869e8b76e7f0`, а `flask db heads` — `54479cfb5c19`: база відстає від каталогу міграцій.
-- Виправлення (3-й спосіб): у файлі міграції стовпець додається з `server_default=sa.true()`. Після цього `flask db upgrade` виконалась, наявні рядки отримали `active = 1`, `flask db check` → `No new upgrade operations detected`.
-- `flask db current --verbose` і `flask db heads` показують ту саму ревізію `54479cfb5c19 (head)`.
+- `flask db migrate -m "Add tags and post_tags"` → `flask db upgrade` (ревізія `4961adba1470`).
 
-### Частина 5. Заповнення даними
-Через `flask shell` додано товар `iPhone 15` (999.99), категорію `Laptops` і товар `Gaming Laptop` (1500.00, `active=False`, `category=laptops`). Перевірка зв'язку:
-```
->>> product.category.name
-'Laptops'
->>> laptops.products
-[<Product Gaming Laptop - $1500.0>]
-```
-У SQLAlchemy 2.x товар, прив'язаний через `category=laptops`, сам у сесію не потрапляє, тому перед `commit()` потрібен `db.session.add(product)`.
+### 10. Теги у `flask shell`
+- Створено теги `Python`, `Flask`, `SQLAlchemy`, `Web` і додано їх до постів через `append()`.
+- `p1.tags` — усі теги поста, `flask_tag.posts` — усі пости тегу; у `post_tags` видно відповідні пари `(post_id, tag_id)`.
 
-### Частина 6. Поле `created_at`
-1. Додано `created_at` з `default=datetime.utcnow`, `flask db migrate -m "Add created_at"`. `flask db upgrade` завершилась помилкою `Cannot add a NOT NULL column with default value NULL [SQL: ALTER TABLE products ADD COLUMN created_at DATETIME NOT NULL]`.
-2. У файлі міграції додано `server_default=sa.text("CURRENT_TIMESTAMP")` — міграція застосувалась, усі рядки отримали дату й час.
-3. Виконано `flask db downgrade`, файл цієї міграції видалено, а в моделі задано `server_default=func.now()`.
-4. `flask db migrate -m "Add created_at with server_default"` — файл згенеровано коректно (`server_default=sa.text('(CURRENT_TIMESTAMP)')`), `flask db upgrade` пройшла без правок.
+### 11. Вибір кількох тегів у формі
+- `PostForm.tags = SelectMultipleField("Теги", coerce=int)`, варіанти — теги з БД. Вибрані теги зберігаються в `post.tags`; при редагуванні поточні теги поста вже вибрані.
 
-### Частина 7. Міграція вручну для додавання даних
-- Моделі й база синхронізовані, тому `flask db migrate` повертає `No changes in schema detected`.
-- `flask db revision -m "Insert data into products table"` створила порожній файл; функції `upgrade()` і `downgrade()` замінено: `op.bulk_insert` додає категорії `Electronics`, `Books`, `Clothing` і товари `Laptop`, `Smartphone LG`, `Novel`, `T-Shirt`, а `downgrade()` видаляє саме ці записи за назвами.
-- `flask db upgrade` — дані з'явились у таблицях. Додатково перевірено `flask db downgrade` (вставлені рядки зникають) і повторний `flask db upgrade`.
+### 12. Теги на сторінці поста
+- На сторінці поста теги виводяться окремим блоком у вигляді «пігулок» (`app/posts/static/css/posts.css`, класи `post-tags`, `post-tag`). Кожен тег — посилання на список постів з цим тегом (`/post?tag=Flask`). Теги показано й на картках у списку постів.
 
-## Підсумкові моделі (`app/products/models.py`)
+### 13. Оптимізація завантаження авторів і тегів
+1. Тестові дані: 5 дописів, 2 автори, 4 теги. Допис 1 має три теги, тег `Flask` належить трьом дописам, у кожного допису є автор.
+2. Журнал SQL увімкнено параметром конфігурації `SQLALCHEMY_ECHO`, який задається в класі `Config` до ініціалізації розширення (`app/config.py`); у консолі: `set SQLALCHEMY_ECHO=1`.
+3. Кожен варіант виконано в окремому запуску `flask shell`. Кількість SELECT рахує обробник події `before_cursor_execute`, підключений безпосередньо перед отриманням дописів, тому враховано лише запити отримання дописів і циклу.
+
+**Варіант 1 — без `.options()`**
 ```python
-class Category(db.Model):
-    __tablename__ = 'categories'
+from sqlalchemy import select
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)
+stmt = select(Post).order_by(Post.id.desc())
+posts = db.session.scalars(stmt).all()
 
-    products: Mapped[list['Product']] = relationship(
-        'Product', back_populates='category', lazy='select')
-
-
-class Product(db.Model):
-    __tablename__ = 'products'
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[str] = mapped_column(String(100), nullable=False)
-    price: Mapped[float] = mapped_column(Float, nullable=False)
-    active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now())
-
-    category_id: Mapped[int | None] = mapped_column(db.ForeignKey('categories.id'))
-    category: Mapped['Category'] = relationship('Category', back_populates='products')
+for post in posts:
+    print(
+        post.title,
+        post.user.username,
+        [tag.name for tag in post.tags],
+    )
 ```
 
-## Файли міграцій (`migrations/versions/`)
+**Варіант 2 — `joinedload()` і `selectinload()`**
+```python
+from sqlalchemy import select
+from sqlalchemy.orm import joinedload, selectinload
+
+stmt = (
+    select(Post)
+    .options(
+        joinedload(Post.user),
+        selectinload(Post.tags),
+    )
+    .order_by(Post.id.desc())
+)
+
+posts = db.session.scalars(stmt).all()
+
+for post in posts:
+    print(
+        post.title,
+        post.user.username,
+        [tag.name for tag in post.tags],
+    )
+```
+
+**Результат виконання (однаковий для обох варіантів)**
+```
+Багато до багатьох: теги постів andrii ['Flask', 'SQLAlchemy', 'Web']
+Зв'язок один-до-багатьох у SQLAlchemy dmytro ['Python', 'SQLAlchemy']
+Новини курсу (оновлено) andrii []
+Міграції з Flask-Migrate dmytro ['Flask']
+Знайомство з Flask-SQLAlchemy andrii ['Python', 'Flask', 'SQLAlchemy']
+```
+
+**Порівняння**
+
+| Варіант запиту | Кількість дописів | Кількість SELECT |
+|---|---|---|
+| Без `.options()` | 5 | 8 |
+| Із `joinedload()` та `selectinload()` | 5 | 2 |
+
+- Без `.options()`: 1 запит на дописи, 2 запити на авторів і 5 запитів на теги (по одному на кожен допис) — проблема N+1. Авторів лише 2, а не 5, бо вже завантажений користувач береться з identity map сесії і повторно не запитується.
+- З `joinedload(Post.user)` автори приходять у тому самому запиті (`LEFT OUTER JOIN users`), а `selectinload(Post.tags)` завантажує теги всіх дописів одним додатковим запитом `... WHERE post_tags.post_id IN (?, ?, ?, ?, ?)`. Разом 2 запити незалежно від кількості дописів.
+- Сторінка `/post` використовує другий варіант, тому теж виконує 2 SELECT (це перевіряє тест `test_posts_page_uses_constant_number_of_queries`).
+
+**SQL-журнал** (повністю у [docs/lab8_sql_log_without_options.txt](docs/lab8_sql_log_without_options.txt) і [docs/lab8_sql_log_with_options.txt](docs/lab8_sql_log_with_options.txt))
+
+<details>
+<summary>Варіант 1 — 8 SELECT</summary>
+
+```
+INFO sqlalchemy.engine.Engine BEGIN (implicit)
+INFO sqlalchemy.engine.Engine SELECT posts.id, posts.title, posts.content, posts.posted, posts.category, posts.is_active, posts.user_id
+FROM posts ORDER BY posts.id DESC
+INFO sqlalchemy.engine.Engine [generated in 0.00017s] ()
+INFO sqlalchemy.engine.Engine SELECT users.id, users.username, users.email, users.password
+FROM users
+WHERE users.id = ?
+INFO sqlalchemy.engine.Engine [generated in 0.00057s] (2,)
+INFO sqlalchemy.engine.Engine SELECT tags.id, tags.name
+FROM tags, post_tags
+WHERE ? = post_tags.post_id AND tags.id = post_tags.tag_id
+INFO sqlalchemy.engine.Engine [generated in 0.00012s] (5,)
+Багато до багатьох: теги постів andrii ['Flask', 'SQLAlchemy', 'Web']
+INFO sqlalchemy.engine.Engine SELECT users.id, users.username, users.email, users.password
+FROM users
+WHERE users.id = ?
+INFO sqlalchemy.engine.Engine [cached since 0.002592s ago] (1,)
+INFO sqlalchemy.engine.Engine SELECT tags.id, tags.name
+FROM tags, post_tags
+WHERE ? = post_tags.post_id AND tags.id = post_tags.tag_id
+INFO sqlalchemy.engine.Engine [cached since 0.0009378s ago] (4,)
+Зв'язок один-до-багатьох у SQLAlchemy dmytro ['Python', 'SQLAlchemy']
+INFO sqlalchemy.engine.Engine SELECT tags.id, tags.name
+FROM tags, post_tags
+WHERE ? = post_tags.post_id AND tags.id = post_tags.tag_id
+INFO sqlalchemy.engine.Engine [cached since 0.001296s ago] (3,)
+Новини курсу (оновлено) andrii []
+INFO sqlalchemy.engine.Engine SELECT tags.id, tags.name
+FROM tags, post_tags
+WHERE ? = post_tags.post_id AND tags.id = post_tags.tag_id
+INFO sqlalchemy.engine.Engine [cached since 0.001624s ago] (2,)
+Міграції з Flask-Migrate dmytro ['Flask']
+INFO sqlalchemy.engine.Engine SELECT tags.id, tags.name
+FROM tags, post_tags
+WHERE ? = post_tags.post_id AND tags.id = post_tags.tag_id
+INFO sqlalchemy.engine.Engine [cached since 0.001958s ago] (1,)
+Знайомство з Flask-SQLAlchemy andrii ['Python', 'Flask', 'SQLAlchemy']
+Кількість дописів: 5 | Кількість SELECT: 8
+```
+</details>
+
+<details>
+<summary>Варіант 2 — 2 SELECT</summary>
+
+```
+INFO sqlalchemy.engine.Engine BEGIN (implicit)
+INFO sqlalchemy.engine.Engine SELECT posts.id, posts.title, posts.content, posts.posted, posts.category, posts.is_active, posts.user_id, users_1.id AS id_1, users_1.username, users_1.email, users_1.password
+FROM posts LEFT OUTER JOIN users AS users_1 ON users_1.id = posts.user_id ORDER BY posts.id DESC
+INFO sqlalchemy.engine.Engine [generated in 0.00016s] ()
+INFO sqlalchemy.engine.Engine SELECT post_tags.post_id, tags.id, tags.name
+FROM post_tags JOIN tags ON tags.id = post_tags.tag_id
+WHERE post_tags.post_id IN (?, ?, ?, ?, ?)
+INFO sqlalchemy.engine.Engine [generated in 0.00065s] (5, 4, 3, 2, 1)
+Багато до багатьох: теги постів andrii ['Flask', 'SQLAlchemy', 'Web']
+Зв'язок один-до-багатьох у SQLAlchemy dmytro ['Python', 'SQLAlchemy']
+Новини курсу (оновлено) andrii []
+Міграції з Flask-Migrate dmytro ['Flask']
+Знайомство з Flask-SQLAlchemy andrii ['Python', 'Flask', 'SQLAlchemy']
+Кількість дописів: 5 | Кількість SELECT: 2
+```
+</details>
+
+## Нові міграції
 | Ревізія | Повідомлення | Що робить |
 |---|---|---|
-| `7c3c8d53fb31` | Add Product | таблиця `products` |
-| `869e8b76e7f0` | Add category attempt #2 | таблиця `categories`, стовпець `products.category_id`, зовнішній ключ `fk_products_category_id_categories` |
-| `54479cfb5c19` | Add active column to products | стовпець `active` з `server_default=sa.true()` |
-| `e1c97fc9abc8` | Add created_at with server_default | стовпець `created_at` з `server_default` |
-| `68ecae781b31` | Insert data into products table | вставка категорій і товарів (`op.bulk_insert`) |
-
-Дві перші ревізії в історії (`bf8943160616`, `567f0b664c1e`) — це міграції таблиці `posts`, які вже були в проєкті.
+| `bfcc170b99fa` | Add users table | таблиця `users` |
+| `19b6905f12e6` | Link posts to users, drop author | `posts.user_id` + `fk_posts_user_id_users`, видалення `posts.author` |
+| `4961adba1470` | Add tags and post_tags | таблиці `tags` і `post_tags` |
 
 ## Скриншоти
 
-### Остаточна схема таблиць
-**Таблиці бази та SQL-схема `categories` і `products` (імена обмежень за `naming_convention`, значення за замовчуванням для `active` і `created_at`)**
+### Пункти 2–4. Таблиці `users` і `posts` після міграцій
+![Схема users і posts](screenshots/lab8/01_db_schema_users_posts.png)
 
-![Схема таблиць](screenshots/lab7/01_db_schema.png)
+### Пункти 5–7. Користувачі, призначення автора, пости користувачів з id=2 і id=1
+![Пости користувачів](screenshots/lab8/02_shell_users_posts.png)
 
-### Остаточні дані у БД
-**Таблиці `categories`, `products` і `alembic_version`**
+### Пункт 8. Список авторів із БД у формі нового поста
+Для скріншота список «Автор» показано розгорнутим: у ньому обидва користувачі з таблиці `users`.
 
-![Дані у БД](screenshots/lab7/02_db_data.png)
+![Вибір автора](screenshots/lab8/03_add_post_author_select.jpg)
 
-### Історія міграцій
-**`flask db history`; поточна ревізія бази (`flask db current`) збігається з останньою доступною (`flask db heads`)**
+**Після збереження: пост з автором `dmytro` у списку**
 
-![Історія міграцій](screenshots/lab7/03_flask_db_history.png)
+![Пост з автором](screenshots/lab8/04_post_added_with_author.jpg)
+
+### Пункт 9. Міграція для `tags` і `post_tags`
+![Міграція тегів](screenshots/lab8/05_tags_migration.png)
+
+### Пункт 10. Теги у `flask shell`: `append()`, теги поста, пости тегу
+![Теги у flask shell](screenshots/lab8/06_shell_tags.png)
+
+### Пункт 11. Вибір кількох тегів у формі нового поста
+![Вибір тегів](screenshots/lab8/07_add_post_tags_form.jpg)
+
+**Після збереження: теги на картці поста**
+
+![Пост з тегами](screenshots/lab8/08_post_added_with_tags.jpg)
+
+### Пункт 12. Стилізовані теги на сторінці поста
+![Теги на сторінці поста](screenshots/lab8/09_post_detail_tags.jpg)
+
+**Перехід за тегом: пости з тегом `SQLAlchemy`**
+
+![Фільтр за тегом](screenshots/lab8/10_posts_filtered_by_tag.jpg)
+
+### Пункт 13. Оптимізація завантаження
+**Тестові дані: кожен допис має автора, допис 1 має кілька тегів, тег `Flask` — у кількох дописах**
+
+![Тестові дані](screenshots/lab8/11_test_data.png)
+
+**Варіант 1, без `.options()`: отримання дописів (1 SELECT)**
+
+![Без options — запит дописів](screenshots/lab8/12_without_options_query.png)
+
+**Варіант 1, без `.options()`: цикл виконує додаткові SELECT, разом 8**
+
+![Без options — цикл](screenshots/lab8/13_without_options_loop.png)
+
+**Варіант 2, `joinedload()` і `selectinload()`: 2 SELECT (окремий запуск `flask shell`)**
+
+![joinedload і selectinload](screenshots/lab8/14_with_joinedload_selectinload.png)
+
+### Тести
+**`python -m unittest tests.test_relations -v` і `python -m unittest discover tests` — 175 тестів, усі проходять**
+
+![Тести](screenshots/lab8/15_tests.png)
 
 ## Тести
-- `tests/test_product_models.py` — 19 тестів: моделі `Product` і `Category`, зв'язок «один до багатьох», унікальність назви категорії, імена обмежень, а також повний ланцюжок міграцій на порожній базі (`upgrade` до останньої ревізії, збіг схеми з моделями, `downgrade`).
-- Усього в проєкті 143 тести, усі проходять. Повний вивід: [docs/test_results.txt](docs/test_results.txt).
+- `tests/test_relations.py` — 16 тестів: зв'язок `User.posts` ↔ `Post.user` (зокрема каскадне видалення), зв'язок `Post.tags` ↔ `Tag.posts` і рядки `post_tags`, унікальність `username`, `email`, `name`, кількість SELECT в обох варіантах пункту 13 і на сторінці `/post`.
+- `tests/test_posts.py` доповнено перевірками вибору автора, вибору тегів, виводу тегів і фільтра за тегом.
+- Усього 175 тестів, усі проходять. Повний вивід: [docs/test_results.txt](docs/test_results.txt).
 
 ## Запуск
 ```bash
@@ -129,8 +274,7 @@ python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
 copy .env.example .env
-flask db upgrade                           # створює таблиці й вставляє дані
-flask db history
+flask db upgrade
 flask run                                  # http://127.0.0.1:8080
 python -m unittest discover tests -v
 ```
