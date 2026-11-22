@@ -7,7 +7,7 @@
     {{ field_errors(field) }}
 </div>
 {% else %}
-{% set base_class = 'form-select' if field.type == 'SelectField' else 'form-control' %}
+{% set base_class = 'form-select' if field.type in ('SelectField', 'SelectMultipleField') else 'form-control' %}
 {% set css = base_class ~ (' is-invalid' if field.errors else '') %}
 <div class="mb-3">
     {{ field.label(class='form-label') }}

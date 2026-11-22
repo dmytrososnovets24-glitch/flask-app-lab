@@ -22,8 +22,9 @@
                 {{ render_field(form.content) }}
                 {{ render_field(form.is_active) }}
                 <div class="row">
-                    <div class="col-md-6">{{ render_field(form.publish_date) }}</div>
-                    <div class="col-md-6">{{ render_field(form.category) }}</div>
+                    <div class="col-md-4">{{ render_field(form.publish_date) }}</div>
+                    <div class="col-md-4">{{ render_field(form.category) }}</div>
+                    <div class="col-md-4">{{ render_field(form.author_id) }}</div>
                 </div>
 
                 <div class="d-flex flex-wrap gap-2">

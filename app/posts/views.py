@@ -15,6 +15,16 @@ def category_label(value):
     return CATEGORY_LABELS.get(value, value or '—')
 
 
+def fill_post(post, form):
+    """Переносить дані з форми в об'єкт Post."""
+    post.title = form.title.data
+    post.content = form.content.data
+    post.is_active = form.is_active.data
+    post.category = form.category.data
+    post.posted = form.publish_date.data or post.posted or datetime.now()
+    post.user_id = form.author_id.data
+
+
 def get_post_or_404(post_id):
     return db.get_or_404(Post, post_id, description=f'Пост з id {post_id} не знайдено.')
 
@@ -39,8 +49,7 @@ def create_post():
 
     if form.validate_on_submit():
         post = Post()
-        form.populate_obj(post)  # title, content, is_active, category
-        post.posted = form.publish_date.data or datetime.now()
+        fill_post(post, form)
         db.session.add(post)
         db.session.commit()
         flash('Пост успішно додано.', 'success')
@@ -59,12 +68,12 @@ def update_post(post_id):
     form.submit.label.text = 'Зберегти зміни'
 
     if request.method == 'GET':
-        # назви відрізняються (publish_date у формі, posted у моделі), тому заповнюємо вручну
+        # назви відрізняються (publish_date / posted, author_id / user_id), тому заповнюємо вручну
         form.publish_date.data = post.posted
+        form.author_id.data = post.user_id
 
     if form.validate_on_submit():
-        form.populate_obj(post)  # оновлення об'єкта post даними з форми
-        post.posted = form.publish_date.data or post.posted
+        fill_post(post, form)  # оновлення об'єкта post даними з форми
         db.session.commit()
         flash('Пост оновлено!', 'success')
         return redirect(url_for('.detail_post', post_id=post.id))

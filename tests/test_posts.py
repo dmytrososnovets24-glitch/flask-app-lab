@@ -11,6 +11,7 @@ VALID = {
     "is_active": "y",
     "publish_date": "2026-11-10T09:30",
     "category": "tech",
+    "author_id": "1",
 }
 
 
@@ -24,6 +25,7 @@ class PostTestBase(unittest.TestCase):
         # створення таблиць у тестовій базі (SQLite в пам'яті)
         with self.app.app_context():
             db.create_all()
+        self.user_id = self.add_user("dmytro")  # автор за замовчуванням (id=1)
 
     def tearDown(self):
         # очищення бази після кожного тесту
@@ -80,10 +82,29 @@ class PostCreateTests(PostTestBase):
         response = self.client.get("/post/create")
         self.assertEqual(response.status_code, 200)
         for name in (b'name="title"', b'name="content"', b'name="is_active"',
-                     b'name="publish_date"', b'name="category"', b'type="submit"'):
+                     b'name="publish_date"', b'name="category"', b'name="author_id"',
+                     b'type="submit"'):
             self.assertIn(name, response.data)
-        # автора у формі не обирають
-        self.assertNotIn(b'name="author"', response.data)
+        self.assertIn(b'<option value="1">dmytro</option>', response.data)
+
+    def test_author_choices_come_from_db(self):
+        self.add_user("andrii")
+        page = self.client.get("/post/create").data.decode()
+        self.assertLess(page.index(">dmytro</option>"), page.index(">andrii</option>"))
+
+    def test_author_is_required(self):
+        self.assert_rejected(self.create(author_id=None), "Оберіть автора")
+
+    def test_author_must_exist(self):
+        self.assert_rejected(self.create(author_id="999"), "Оберіть автора зі списку")
+
+    def test_author_saved_from_select(self):
+        andrii = self.add_user("andrii")
+        self.create(author_id=str(andrii))
+        with self.app.app_context():
+            post = db.session.scalars(db.select(Post)).one()
+            self.assertEqual(post.user.username, "andrii")
+            self.assertEqual([p.title for p in post.user.posts], ["My first post"])
 
     def test_create_post(self):
         response = self.create(follow=True)
@@ -98,6 +119,7 @@ class PostCreateTests(PostTestBase):
         self.assertEqual(post.category, "tech")
         self.assertTrue(post.is_active)
         self.assertEqual(post.posted, datetime(2026, 11, 10, 9, 30))
+        self.assertEqual(post.user_id, 1)
 
     def test_create_redirects_to_list(self):
         response = self.create()
@@ -181,7 +203,7 @@ class PostReadTests(PostTestBase):
         self.assertNotIn("TAIL", page)
 
     def test_detail_shows_full_post(self):
-        post_id = self.add_post(title="Detailed", content="b" * 100 + "TAIL", user_id=self.add_user("dmytro"),
+        post_id = self.add_post(title="Detailed", content="b" * 100 + "TAIL", user_id=self.user_id,
                                 category="news", posted=datetime(2026, 11, 5, 14, 0))
         page = self.client.get(f"/post/{post_id}").data.decode()
         for text in ("Detailed", "TAIL", "dmytro", "Новина", "05.11.2026 14:00",
@@ -211,12 +233,27 @@ class PostUpdateTests(PostTestBase):
         self.assertIn('value="2026-11-05T14:00"', page)
         self.assertRegex(page, r'<option selected value="tech">')
 
+    def test_update_form_selects_current_author(self):
+        andrii = self.add_user("andrii")
+        post_id = self.add_post(user_id=andrii)
+        page = self.client.get(f"/post/{post_id}/update").data.decode()
+        self.assertIn(f'<option selected value="{andrii}">andrii</option>', page)
+
+    def test_update_can_change_author(self):
+        andrii = self.add_user("andrii")
+        post_id = self.add_post(user_id=self.user_id)
+        self.client.post(f"/post/{post_id}/update", data={
+            "title": "Existing post", "content": "Some content", "is_active": "y",
+            "publish_date": "2026-11-11T08:15", "category": "other", "author_id": str(andrii)})
+        self.assertEqual(self.get_post(post_id).user_id, andrii)
+
     def test_update_post(self):
         user_id = self.add_user("andrii")
         post_id = self.add_post(title="Docker", user_id=user_id)
         response = self.client.post(f"/post/{post_id}/update", data={
             "title": "Docker Update", "content": "New content", "is_active": "y",
-            "publish_date": "2026-11-11T08:15", "category": "publication"})
+            "publish_date": "2026-11-11T08:15", "category": "publication",
+            "author_id": str(user_id)})
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response.headers["Location"].endswith(f"/post/{post_id}"))
 
@@ -232,7 +269,7 @@ class PostUpdateTests(PostTestBase):
         post_id = self.add_post()
         self.client.post(f"/post/{post_id}/update", data={
             "title": "Existing post", "content": "Some content",
-            "publish_date": "2026-11-11T08:15", "category": "other"})
+            "publish_date": "2026-11-11T08:15", "category": "other", "author_id": "1"})
         self.assertFalse(self.get_post(post_id).is_active)
 
     def test_update_invalid_does_not_change_post(self):

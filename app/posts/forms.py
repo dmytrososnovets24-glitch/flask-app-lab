@@ -4,7 +4,10 @@ from flask_wtf import FlaskForm
 from wtforms import (BooleanField, DateTimeLocalField, SelectField, StringField,
                      SubmitField, TextAreaField)
 from wtforms.fields.choices import SelectChoice
-from wtforms.validators import DataRequired, Length, Optional
+from wtforms.validators import DataRequired, InputRequired, Length, Optional, ValidationError
+
+from app import db
+from app.users.models import User
 
 from .models import CATEGORIES
 
@@ -42,7 +45,24 @@ class PostForm(FlaskForm):
         choices=[SelectChoice(value, CATEGORY_LABELS[value]) for value in CATEGORIES],
         validators=[DataRequired(message='Оберіть категорію.')],
     )
+    # автор поста — один із користувачів з БД
+    author_id = SelectField(
+        'Автор',
+        coerce=int,
+        validate_choice=False,  # перевірку виконує validate_author_id з українським повідомленням
+        validators=[InputRequired(message='Оберіть автора.')],
+    )
     submit = SubmitField('Додати пост')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # список авторів із БД (синтаксис SQLAlchemy 2.0)
+        authors = db.session.scalars(db.select(User).order_by(User.id)).all()
+        self.author_id.choices = [SelectChoice(a.id, a.username) for a in authors]
+
+    def validate_author_id(self, field):
+        if field.data is None or db.session.get(User, field.data) is None:
+            raise ValidationError('Оберіть автора зі списку.')
 
 
 class DeletePostForm(FlaskForm):
