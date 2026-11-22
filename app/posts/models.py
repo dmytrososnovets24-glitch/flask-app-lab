@@ -36,8 +36,8 @@ class Post(db.Model):
         Enum(*CATEGORIES, name='post_category'), default='other')
     is_active: Mapped[Optional[bool]] = mapped_column(Boolean, default=True)
     # автор поста: зовнішній ключ на users.id і зворотний зв'язок до User.posts
-    user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"))
-    user: Mapped[Optional["User"]] = relationship(back_populates="posts")
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    user: Mapped["User"] = relationship(back_populates="posts")
 
     # Зв'язок "багато до багатьох" з тегами
     tags: Mapped[list["Tag"]] = relationship(secondary=post_tags, back_populates="posts")
