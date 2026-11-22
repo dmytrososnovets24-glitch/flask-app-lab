@@ -35,14 +35,14 @@
                     <a class="nav-link {% if request.endpoint == 'main.contacts' %}active{% endif %}"
                        href="{{ url_for('main.contacts') }}">Контакти</a>
                 </li>
-                {% if session.get('user_id') %}
+                {% if current_user.is_authenticated %}
                 <li class="nav-item">
                     <a class="nav-link {% if request.endpoint == 'users.users_list' %}active{% endif %}"
                        href="{{ url_for('users.users_list') }}">Користувачі</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link {% if request.endpoint in ('users.account', 'users.profile') %}active{% endif %}"
-                       href="{{ url_for('users.account') }}">Профіль ({{ session['username'] }})</a>
+                       href="{{ url_for('users.account') }}">Профіль ({{ current_user.username }})</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('users.logout') }}">Вихід</a>

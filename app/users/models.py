@@ -1,15 +1,22 @@
 from typing import TYPE_CHECKING
 
+from flask_login import UserMixin
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app import bcrypt, db
+from app import bcrypt, db, login_manager
 
 if TYPE_CHECKING:
     from app.posts.models import Post
 
 
-class User(db.Model):
+@login_manager.user_loader
+def user_loader(user_id):
+    # id із сесії приходить рядком
+    return db.session.get(User, int(user_id))
+
+
+class User(db.Model, UserMixin):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True)

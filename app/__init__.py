@@ -2,6 +2,7 @@ import os
 
 from flask import Flask, flash, render_template
 from flask_bcrypt import Bcrypt
+from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import MetaData
@@ -26,6 +27,7 @@ class Base(DeclarativeBase):
 db = SQLAlchemy(model_class=Base)
 migrate = Migrate()
 bcrypt = Bcrypt()
+login_manager = LoginManager()
 
 
 def create_app(config_name=None):
@@ -38,6 +40,12 @@ def create_app(config_name=None):
     db.init_app(app)
     migrate.init_app(app, db, render_as_batch=True)
     bcrypt.init_app(app)
+    login_manager.init_app(app)
+
+    # налаштування маршруту перенаправлення для неавторизованих користувачів
+    login_manager.login_view = 'users.login'
+    login_manager.login_message = 'Будь ласка, увійдіть, щоб отримати доступ до цієї сторінки.'
+    login_manager.login_message_category = 'warning'
 
     from .views import main_bp
     from .users import users_bp

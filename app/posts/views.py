@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from flask import flash, redirect, render_template, request, url_for
+from flask_login import current_user
 from sqlalchemy.orm import joinedload, selectinload
 
 from app import db
@@ -58,6 +59,8 @@ def detail_post(post_id):
 @post_bp.route('/create', methods=['GET', 'POST'])
 def create_post():
     form = PostForm()
+    if request.method == 'GET' and current_user.is_authenticated:
+        form.author_id.data = current_user.id
 
     if form.validate_on_submit():
         post = Post()
