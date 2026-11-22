@@ -34,40 +34,56 @@ test_subject_must_be_from_list (test_contact_form.ContactFormTestCase.test_subje
 test_subject_required (test_contact_form.ContactFormTestCase.test_subject_required) ... ok
 test_valid_post_redirects_logs_and_flashes (test_contact_form.ContactFormTestCase.test_valid_post_redirects_logs_and_flashes) ... ok
 test_unknown_page_shows_custom_404 (test_posts.ErrorPageTests.test_unknown_page_shows_custom_404) ... ok
-test_author_is_anonymous_without_session (test_posts.PostCreateTests.test_author_is_anonymous_without_session) ... ok
-test_author_is_user_from_session (test_posts.PostCreateTests.test_author_is_user_from_session) ... ok
+test_author_choices_come_from_db (test_posts.PostCreateTests.test_author_choices_come_from_db) ... ok
+test_author_is_required (test_posts.PostCreateTests.test_author_is_required) ... ok
+test_author_must_exist (test_posts.PostCreateTests.test_author_must_exist) ... ok
+test_author_saved_from_select (test_posts.PostCreateTests.test_author_saved_from_select) ... ok
 test_category_must_be_from_list (test_posts.PostCreateTests.test_category_must_be_from_list) ... ok
 test_content_required (test_posts.PostCreateTests.test_content_required) ... ok
+test_create_form_has_tags_multiselect (test_posts.PostCreateTests.test_create_form_has_tags_multiselect) ... ok
 test_create_form_renders (test_posts.PostCreateTests.test_create_form_renders) ... ok
 test_create_post (test_posts.PostCreateTests.test_create_post) ... ok
+test_create_post_with_several_tags (test_posts.PostCreateTests.test_create_post_with_several_tags) ... ok
+test_create_post_without_tags (test_posts.PostCreateTests.test_create_post_without_tags) ... ok
 test_create_redirects_to_list (test_posts.PostCreateTests.test_create_redirects_to_list) ... ok
 test_invalid_submit_shows_flash (test_posts.PostCreateTests.test_invalid_submit_shows_flash) ... ok
+test_new_post_has_no_author_field (test_posts.PostCreateTests.test_new_post_has_no_author_field) ... ok
 test_publish_date_defaults_to_now (test_posts.PostCreateTests.test_publish_date_defaults_to_now) ... ok
 test_title_required (test_posts.PostCreateTests.test_title_required) ... ok
 test_title_too_long (test_posts.PostCreateTests.test_title_too_long) ... ok
 test_title_too_short (test_posts.PostCreateTests.test_title_too_short) ... ok
 test_unchecked_is_active_creates_hidden_post (test_posts.PostCreateTests.test_unchecked_is_active_creates_hidden_post) ... ok
+test_unknown_tag_is_rejected (test_posts.PostCreateTests.test_unknown_tag_is_rejected) ... ok
 test_create_without_token_is_rejected (test_posts.PostCsrfTests.test_create_without_token_is_rejected) ... ok
 test_delete_without_token_is_rejected (test_posts.PostCsrfTests.test_delete_without_token_is_rejected) ... ok
 test_forms_contain_csrf_token (test_posts.PostCsrfTests.test_forms_contain_csrf_token) ... ok
 test_delete_confirmation_page (test_posts.PostDeleteTests.test_delete_confirmation_page) ... ok
 test_delete_not_found (test_posts.PostDeleteTests.test_delete_not_found) ... ok
 test_delete_post (test_posts.PostDeleteTests.test_delete_post) ... ok
+test_delete_post_keeps_tags (test_posts.PostDeleteTests.test_delete_post_keeps_tags) ... ok
 test_defaults (test_posts.PostModelTests.test_defaults) ... ok
 test_repr (test_posts.PostModelTests.test_repr) ... ok
 test_detail_not_found (test_posts.PostReadTests.test_detail_not_found) ... ok
 test_detail_shows_full_post (test_posts.PostReadTests.test_detail_shows_full_post) ... ok
+test_detail_shows_styled_tags (test_posts.PostReadTests.test_detail_shows_styled_tags) ... ok
+test_detail_without_tags_has_no_tag_block (test_posts.PostReadTests.test_detail_without_tags_has_no_tag_block) ... ok
 test_empty_list (test_posts.PostReadTests.test_empty_list) ... ok
 test_html_in_post_is_escaped (test_posts.PostReadTests.test_html_in_post_is_escaped) ... ok
+test_list_filtered_by_tag (test_posts.PostReadTests.test_list_filtered_by_tag) ... ok
+test_list_shows_author_and_tags (test_posts.PostReadTests.test_list_shows_author_and_tags) ... ok
 test_list_shows_only_active_posts (test_posts.PostReadTests.test_list_shows_only_active_posts) ... ok
 test_list_shows_posts_with_details (test_posts.PostReadTests.test_list_shows_posts_with_details) ... ok
 test_list_sorted_by_date_descending (test_posts.PostReadTests.test_list_sorted_by_date_descending) ... ok
 test_list_truncates_content_to_100_chars (test_posts.PostReadTests.test_list_truncates_content_to_100_chars) ... ok
+test_update_can_change_author (test_posts.PostUpdateTests.test_update_can_change_author) ... ok
 test_update_can_hide_post (test_posts.PostUpdateTests.test_update_can_hide_post) ... ok
 test_update_form_is_prefilled (test_posts.PostUpdateTests.test_update_form_is_prefilled) ... ok
+test_update_form_preselects_tags (test_posts.PostUpdateTests.test_update_form_preselects_tags) ... ok
+test_update_form_selects_current_author (test_posts.PostUpdateTests.test_update_form_selects_current_author) ... ok
 test_update_invalid_does_not_change_post (test_posts.PostUpdateTests.test_update_invalid_does_not_change_post) ... ok
 test_update_not_found (test_posts.PostUpdateTests.test_update_not_found) ... ok
 test_update_post (test_posts.PostUpdateTests.test_update_post) ... ok
+test_update_replaces_tags (test_posts.PostUpdateTests.test_update_replaces_tags) ... ok
 test_append_product_through_category (test_product_models.CategoryRelationTests.test_append_product_through_category) ... ok
 test_category_has_many_products (test_product_models.CategoryRelationTests.test_category_has_many_products) ... ok
 test_category_name_is_unique (test_product_models.CategoryRelationTests.test_category_name_is_unique) ... ok
@@ -137,6 +153,22 @@ test_edit_not_found (test_products_bp.ProductsUpdateTests.test_edit_not_found) .
 test_edit_updates_fields_but_keeps_id_and_created_at (test_products_bp.ProductsUpdateTests.test_edit_updates_fields_but_keeps_id_and_created_at) ... ok
 test_edit_with_new_image_replaces_and_removes_old_file (test_products_bp.ProductsUpdateTests.test_edit_with_new_image_replaces_and_removes_old_file) ... ok
 test_edit_without_new_image_keeps_old_one (test_products_bp.ProductsUpdateTests.test_edit_without_new_image_keeps_old_one) ... ok
+test_both_variants_return_same_data (test_relations.LoadingStrategyTests.test_both_variants_return_same_data) ... ok
+test_posts_page_uses_constant_number_of_queries (test_relations.LoadingStrategyTests.test_posts_page_uses_constant_number_of_queries) ... ok
+test_with_joinedload_and_selectinload_runs_two_queries (test_relations.LoadingStrategyTests.test_with_joinedload_and_selectinload_runs_two_queries) ... ok
+test_without_options_runs_n_plus_one_queries (test_relations.LoadingStrategyTests.test_without_options_runs_n_plus_one_queries) ... ok
+test_echo_is_off_by_default (test_relations.SqlEchoConfigTests.test_echo_is_off_by_default) ... ok
+test_association_rows (test_relations.TagRelationTests.test_association_rows) ... ok
+test_deleting_post_removes_only_links (test_relations.TagRelationTests.test_deleting_post_removes_only_links) ... ok
+test_tag_name_is_unique (test_relations.TagRelationTests.test_tag_name_is_unique) ... ok
+test_tag_repr (test_relations.TagRelationTests.test_tag_repr) ... ok
+test_tags_of_post_and_posts_of_tag (test_relations.TagRelationTests.test_tags_of_post_and_posts_of_tag) ... ok
+test_back_populates_both_sides (test_relations.UserPostRelationTests.test_back_populates_both_sides) ... ok
+test_deleting_user_deletes_posts (test_relations.UserPostRelationTests.test_deleting_user_deletes_posts) ... ok
+test_post_without_user (test_relations.UserPostRelationTests.test_post_without_user) ... ok
+test_posts_of_user (test_relations.UserPostRelationTests.test_posts_of_user) ... ok
+test_user_repr (test_relations.UserPostRelationTests.test_user_repr) ... ok
+test_username_and_email_are_unique (test_relations.UserPostRelationTests.test_username_and_email_are_unique) ... ok
 test_admin_page (test_user_bp.FlaskAppTestCase.test_admin_page)
 Тест маршруту /users/admin, який перенаправляє. ... ok
 test_admin_redirects (test_user_bp.FlaskAppTestCase.test_admin_redirects)
@@ -147,6 +179,6 @@ test_greetings_without_age (test_user_bp.FlaskAppTestCase.test_greetings_without
 Без параметра age сторінка все одно відкривається. ... ok
 
 ----------------------------------------------------------------------
-Ran 143 tests in 3.918s
+Ran 175 tests in 2.670s
 
 OK

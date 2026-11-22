@@ -42,7 +42,8 @@ class UserPostRelationTests(RelationTestBase):
         self.post("Second", andrii)
         self.post("Third", dmytro)
         db.session.commit()
-        self.assertEqual([p.title for p in db.session.get(User, andrii.id).posts], ["First", "Second"])
+        # колекції зв'язків завантажуються без ORDER BY, тому порівнюємо без урахування порядку
+        self.assertEqual(sorted(p.title for p in db.session.get(User, andrii.id).posts), ["First", "Second"])
         self.assertEqual([p.title for p in db.session.get(User, dmytro.id).posts], ["Third"])
 
     def test_back_populates_both_sides(self):
@@ -96,8 +97,8 @@ class TagRelationTests(RelationTestBase):
         second.tags.append(flask)
         db.session.add(web)
         db.session.commit()
-        self.assertEqual([t.name for t in first.tags], ["Python", "Flask"])
-        self.assertEqual([p.title for p in flask.posts], ["First", "Second"])
+        self.assertEqual(sorted(t.name for t in first.tags), ["Flask", "Python"])
+        self.assertEqual(sorted(p.title for p in flask.posts), ["First", "Second"])
         self.assertEqual(web.posts, [])
 
     def test_association_rows(self):
@@ -153,7 +154,7 @@ class LoadingStrategyTests(RelationTestBase):
 
     def run_loop(self, stmt):
         posts = db.session.scalars(stmt).all()
-        return [(p.title, p.user.username, [t.name for t in p.tags]) for p in posts]
+        return [(p.title, p.user.username, sorted(t.name for t in p.tags)) for p in posts]
 
     def test_without_options_runs_n_plus_one_queries(self):
         rows = self.run_loop(db.select(Post).order_by(Post.id.desc()))
@@ -180,7 +181,7 @@ class LoadingStrategyTests(RelationTestBase):
             db.select(Post).options(joinedload(Post.user), selectinload(Post.tags))
             .order_by(Post.id.desc()))
         self.assertEqual(plain, optimized)
-        self.assertEqual(plain[-1], ("P1", "dmytro", ["Python", "Flask", "SQLAlchemy"]))
+        self.assertEqual(plain[-1], ("P1", "dmytro", ["Flask", "Python", "SQLAlchemy"]))
 
     def test_posts_page_uses_constant_number_of_queries(self):
         db.session.remove()

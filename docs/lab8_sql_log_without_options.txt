@@ -1,0 +1,42 @@
+# Пункт 13. Варіант 1: без .options() (SQLALCHEMY_ECHO=1, окремий запуск flask shell)
+
+2026-11-23 01:08:38,251 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-11-23 01:08:38,253 INFO sqlalchemy.engine.Engine SELECT posts.id, posts.title, posts.content, posts.posted, posts.category, posts.is_active, posts.user_id 
+FROM posts ORDER BY posts.id DESC
+2026-11-23 01:08:38,253 INFO sqlalchemy.engine.Engine [generated in 0.00017s] ()
+2026-11-23 01:08:38,253 INFO sqlalchemy.engine.Engine SELECT users.id, users.username, users.email, users.password 
+FROM users 
+WHERE users.id = ?
+2026-11-23 01:08:38,253 INFO sqlalchemy.engine.Engine [generated in 0.00057s] (2,)
+2026-11-23 01:08:38,253 INFO sqlalchemy.engine.Engine SELECT tags.id, tags.name 
+FROM tags, post_tags 
+WHERE ? = post_tags.post_id AND tags.id = post_tags.tag_id
+2026-11-23 01:08:38,253 INFO sqlalchemy.engine.Engine [generated in 0.00012s] (5,)
+Багато до багатьох: теги постів andrii ['Flask', 'SQLAlchemy', 'Web']
+2026-11-23 01:08:38,262 INFO sqlalchemy.engine.Engine SELECT users.id, users.username, users.email, users.password 
+FROM users 
+WHERE users.id = ?
+2026-11-23 01:08:38,262 INFO sqlalchemy.engine.Engine [cached since 0.002592s ago] (1,)
+2026-11-23 01:08:38,262 INFO sqlalchemy.engine.Engine SELECT tags.id, tags.name 
+FROM tags, post_tags 
+WHERE ? = post_tags.post_id AND tags.id = post_tags.tag_id
+2026-11-23 01:08:38,262 INFO sqlalchemy.engine.Engine [cached since 0.0009378s ago] (4,)
+Зв'язок один-до-багатьох у SQLAlchemy dmytro ['Python', 'SQLAlchemy']
+2026-11-23 01:08:38,262 INFO sqlalchemy.engine.Engine SELECT tags.id, tags.name 
+FROM tags, post_tags 
+WHERE ? = post_tags.post_id AND tags.id = post_tags.tag_id
+2026-11-23 01:08:38,262 INFO sqlalchemy.engine.Engine [cached since 0.001296s ago] (3,)
+Новини курсу (оновлено) andrii []
+2026-11-23 01:08:38,262 INFO sqlalchemy.engine.Engine SELECT tags.id, tags.name 
+FROM tags, post_tags 
+WHERE ? = post_tags.post_id AND tags.id = post_tags.tag_id
+2026-11-23 01:08:38,262 INFO sqlalchemy.engine.Engine [cached since 0.001624s ago] (2,)
+Міграції з Flask-Migrate dmytro ['Flask']
+2026-11-23 01:08:38,263 INFO sqlalchemy.engine.Engine SELECT tags.id, tags.name 
+FROM tags, post_tags 
+WHERE ? = post_tags.post_id AND tags.id = post_tags.tag_id
+2026-11-23 01:08:38,263 INFO sqlalchemy.engine.Engine [cached since 0.001958s ago] (1,)
+Знайомство з Flask-SQLAlchemy andrii ['Python', 'Flask', 'SQLAlchemy']
+Кількість дописів: 5 | Кількість SELECT: 8
+
+2026-11-23 01:08:38,263 INFO sqlalchemy.engine.Engine ROLLBACK

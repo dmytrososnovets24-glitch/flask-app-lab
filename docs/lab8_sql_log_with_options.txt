@@ -1,0 +1,18 @@
+# Пункт 13. Варіант 2: joinedload(Post.user) + selectinload(Post.tags) (SQLALCHEMY_ECHO=1, окремий запуск flask shell)
+
+2026-11-23 01:08:39,203 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-11-23 01:08:39,208 INFO sqlalchemy.engine.Engine SELECT posts.id, posts.title, posts.content, posts.posted, posts.category, posts.is_active, posts.user_id, users_1.id AS id_1, users_1.username, users_1.email, users_1.password 
+FROM posts LEFT OUTER JOIN users AS users_1 ON users_1.id = posts.user_id ORDER BY posts.id DESC
+2026-11-23 01:08:39,208 INFO sqlalchemy.engine.Engine [generated in 0.00016s] ()
+2026-11-23 01:08:39,211 INFO sqlalchemy.engine.Engine SELECT post_tags.post_id, tags.id, tags.name 
+FROM post_tags JOIN tags ON tags.id = post_tags.tag_id 
+WHERE post_tags.post_id IN (?, ?, ?, ?, ?)
+2026-11-23 01:08:39,211 INFO sqlalchemy.engine.Engine [generated in 0.00065s] (5, 4, 3, 2, 1)
+Багато до багатьох: теги постів andrii ['Flask', 'SQLAlchemy', 'Web']
+Зв'язок один-до-багатьох у SQLAlchemy dmytro ['Python', 'SQLAlchemy']
+Новини курсу (оновлено) andrii []
+Міграції з Flask-Migrate dmytro ['Flask']
+Знайомство з Flask-SQLAlchemy andrii ['Python', 'Flask', 'SQLAlchemy']
+Кількість дописів: 5 | Кількість SELECT: 2
+
+2026-11-23 01:08:39,213 INFO sqlalchemy.engine.Engine ROLLBACK
