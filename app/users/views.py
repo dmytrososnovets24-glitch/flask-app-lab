@@ -3,6 +3,7 @@ from urllib.parse import urlsplit
 
 from flask import current_app, flash, make_response, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
+from sqlalchemy.orm import selectinload
 
 from app import db
 
@@ -83,7 +84,8 @@ def account():
 @users_bp.route('/', strict_slashes=False)
 @login_required
 def users_list():
-    users = db.session.scalars(db.select(User).order_by(User.id)).all()
+    # пости користувачів завантажуються одним додатковим запитом (без N+1)
+    users = db.session.scalars(db.select(User).options(selectinload(User.posts)).order_by(User.id)).all()
     return render_template('users/users.html', title='Користувачі', users=users)
 
 
