@@ -1,272 +1,150 @@
-# Лабораторна робота №8. ORM. Зв'язки між моделями
+# Лабораторна робота №9. Побудова системи реєстрації та входу користувачів. Модуль Flask-Login
 
 **Студент:** Сосновець Дмитро Сергійович, ІПЗ-33
-**Гілка:** [`lab8`](https://github.com/dmytrososnovets24-glitch/flask-app-lab/tree/lab8) (створена з `lab7`)
+**Гілка:** [`lab9`](https://github.com/dmytrososnovets24-glitch/flask-app-lab/tree/lab9) (створена з `lab8`)
 
-## Мета
-- Закріпити знання про створення та використання зв'язків між моделями в SQLAlchemy.
-- Навчитися працювати з різними типами зв'язків (один-до-багатьох, багато-до-багатьох).
-- Ознайомитися з основними операціями над об'єктами, пов'язаними між собою.
+## Частина 1. Реєстрація користувачів
 
-## Хід роботи
+### 1. Flask-Bcrypt
+- `pip install flask-bcrypt` (у `requirements.txt` додано `Flask-Bcrypt==1.0.1`).
+- `app/__init__.py`: об'єкт `bcrypt = Bcrypt()` і `bcrypt.init_app(app)` у фабриці `create_app()`.
+- У моделі `User` з'явилися методи `hash_password()` (замінює пароль його bcrypt-хешем) і `check_password(password)` (порівнює пароль із хешем). Для записів, у яких у БД лежить не хеш, `check_password` повертає `False`, а не падає з помилкою.
 
-### 1–2. Модель `User` і міграція
-- `app/users/models.py` — модель `User` з полями `id`, `username` (String(20), унікальне), `email` (String(120), унікальне), `password` (String(60)).
-- `flask db migrate -m "Add users table"` → `flask db upgrade`: у БД з'явилася таблиця `users` (ревізія `bfcc170b99fa`).
+### 2. Користувач із хешованим паролем у `flask shell`
+- Створено третього користувача `sosnovets` і збережено його пароль як `bcrypt.generate_password_hash(...).decode("utf-8")`.
+- `generate_password_hash` повертає `bytes`, тому для поля `String(60)` хеш декодується в рядок.
+- `bcrypt.check_password_hash(users[2].password, "...")` повертає `True` для правильного пароля і `False` для неправильного. У перших двох користувачів (з лабораторної №8) паролі збережені відкритим текстом — так само, як у таблиці в завданні.
 
-### 3–4. Двосторонній зв'язок `Post` ↔ `User`
-- У моделі `Post` видалено поле `author` і додано зовнішній ключ та зв'язок:
-  ```python
-  user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"))
-  user: Mapped[Optional["User"]] = relationship(back_populates="posts")
-  ```
-- У моделі `User`:
-  ```python
-  posts: Mapped[list["Post"]] = relationship(back_populates="user", cascade="all, delete-orphan")
-  ```
-- `flask db migrate -m "Link posts to users, drop author"` → `flask db upgrade` (ревізія `19b6905f12e6`). Завдяки `naming_convention` з лабораторної №7 обмеження отримало ім'я `fk_posts_user_id_users`, тому міграція застосувалась і відкочується без ручних правок.
-- `user_id` зроблено `Optional` (NULL дозволено): у таблиці вже були пости, а користувачів на момент міграції ще не було, і за пунктом 6 автора отримують лише деякі пости.
+### 3. Сторінка реєстрації (`/users/register`)
+- `app/users/forms.py`, клас `RegistrationForm`:
+  - `username` — обов'язкове, від 4 до 14 символів, `Regexp`: починається з латинської літери, далі літери, цифри, крапки або підкреслення;
+  - `email` — обов'язкове, валідатор `Email()`; пробіли обрізаються, адреса зберігається в нижньому регістрі;
+  - `password` — обов'язкове, щонайменше 6 символів;
+  - `confirm_password` — `EqualTo('password')`;
+  - `validate_username` і `validate_email` перевіряють унікальність у БД (запити SQLAlchemy 2.0).
+- Маршрут хешує пароль перед збереженням (`user.hash_password()`), показує flash-повідомлення і перенаправляє на сторінку входу.
 
-### 5–7. Користувачі та їхні пости у `flask shell`
-- Додано двох користувачів: `dmytro` (id=1) і `andrii` (id=2).
-- Постам 1 і 3 призначено автора — користувача з id=2.
-- `db.session.get(User, 2).posts` повертає пости 1 і 3, `db.session.get(User, 1).posts` — порожній список.
-
-### 8. Вибір автора у формі поста
-- `PostForm.author_id = SelectField("Автор", coerce=int)`. Список авторів завантажується в `__init__` форми синтаксисом SQLAlchemy 2.0:
-  ```python
-  authors = db.session.scalars(db.select(User).order_by(User.id)).all()
-  self.author_id.choices = [SelectChoice(a.id, a.username) for a in authors]
-  ```
-- Валідатор `validate_author_id` перевіряє, що вибраний користувач існує в БД. Під час редагування в списку вибрано поточного автора поста.
-
-### 9. Зв'язок «багато до багатьох» `Post` ↔ `Tag`
-- Асоціативна таблиця `post_tags` (`post_id`, `tag_id`, складений первинний ключ) і модель `Tag` (`id`, `name` — унікальне):
-  ```python
-  post_tags = db.Table(
-      'post_tags',
-      db.Column('post_id', db.Integer, db.ForeignKey('posts.id'), primary_key=True),
-      db.Column('tag_id', db.Integer, db.ForeignKey('tags.id'), primary_key=True),
-  )
-  # Post
-  tags: Mapped[list["Tag"]] = relationship(secondary=post_tags, back_populates="posts")
-  # Tag
-  posts: Mapped[list["Post"]] = relationship(secondary=post_tags, back_populates="tags")
-  ```
-- `flask db migrate -m "Add tags and post_tags"` → `flask db upgrade` (ревізія `4961adba1470`).
-
-### 10. Теги у `flask shell`
-- Створено теги `Python`, `Flask`, `SQLAlchemy`, `Web` і додано їх до постів через `append()`.
-- `p1.tags` — усі теги поста, `flask_tag.posts` — усі пости тегу; у `post_tags` видно відповідні пари `(post_id, tag_id)`.
-
-### 11. Вибір кількох тегів у формі
-- `PostForm.tags = SelectMultipleField("Теги", coerce=int)`, варіанти — теги з БД. Вибрані теги зберігаються в `post.tags`; при редагуванні поточні теги поста вже вибрані.
-
-### 12. Теги на сторінці поста
-- На сторінці поста теги виводяться окремим блоком у вигляді «пігулок» (`app/posts/static/css/posts.css`, класи `post-tags`, `post-tag`). Кожен тег — посилання на список постів з цим тегом (`/post?tag=Flask`). Теги показано й на картках у списку постів.
-
-### 13. Оптимізація завантаження авторів і тегів
-1. Тестові дані: 5 дописів, 2 автори, 4 теги. Допис 1 має три теги, тег `Flask` належить трьом дописам, у кожного допису є автор.
-2. Журнал SQL увімкнено параметром конфігурації `SQLALCHEMY_ECHO`, який задається в класі `Config` до ініціалізації розширення (`app/config.py`); у консолі: `set SQLALCHEMY_ECHO=1`.
-3. Кожен варіант виконано в окремому запуску `flask shell`. Кількість SELECT рахує обробник події `before_cursor_execute`, підключений безпосередньо перед отриманням дописів, тому враховано лише запити отримання дописів і циклу.
-
-**Варіант 1 — без `.options()`**
 ```python
-from sqlalchemy import select
+@users_bp.route('/register', methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('users.account'))
 
-stmt = select(Post).order_by(Post.id.desc())
-posts = db.session.scalars(stmt).all()
-
-for post in posts:
-    print(
-        post.title,
-        post.user.username,
-        [tag.name for tag in post.tags],
-    )
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        user = User(username=form.username.data, email=form.email.data, password=form.password.data)
+        user.hash_password()
+        db.session.add(user)
+        db.session.commit()
+        flash(f'Обліковий запис для {user.username} створено! Тепер можна увійти.', 'success')
+        return redirect(url_for('users.login'))
+    return render_template('users/register.html', form=form, title='Реєстрація')
 ```
 
-**Варіант 2 — `joinedload()` і `selectinload()`**
-```python
-from sqlalchemy import select
-from sqlalchemy.orm import joinedload, selectinload
+### 4. Вхід на сайт (`/users/login`)
+- Наявний вхід, що порівнював логін і пароль з константами `AUTH_USERNAME` / `AUTH_PASSWORD`, замінено перевіркою по БД: `LoginForm` (`email`, `password`, `remember`), користувач шукається за email, пароль перевіряється порівнянням хешів (`user.check_password`).
+- У частині 1 після успішного входу дані користувача записувались у сесію (`session['username'] = user.username` тощо) і виконувалось перенаправлення на нову сторінку `account` (`/users/account`, шаблон `account.html`). У частині 2 сесію замінив `login_user`.
 
-stmt = (
-    select(Post)
-    .options(
-        joinedload(Post.user),
-        selectinload(Post.tags),
-    )
-    .order_by(Post.id.desc())
-)
+### 5. Список користувачів (`/users/`)
+- Таблиця з `Id`, ім'ям, email і кількістю постів; у заголовку — кількість користувачів. Якщо користувачів немає, виводиться «Зареєстрованих користувачів поки немає». Пости користувачів завантажуються через `selectinload(User.posts)`, тож немає N+1.
 
-posts = db.session.scalars(stmt).all()
+## Частина 2. Flask-Login
 
-for post in posts:
-    print(
-        post.title,
-        post.user.username,
-        [tag.name for tag in post.tags],
-    )
-```
+### 6. Авторизація і захист сторінок
+- `pip install flask-login` (`Flask-Login==0.6.3`). В `app/__init__.py`:
+  ```python
+  login_manager = LoginManager()
+  ...
+  login_manager.init_app(app)
+  login_manager.login_view = 'users.login'
+  login_manager.login_message = 'Будь ласка, увійдіть, щоб отримати доступ до цієї сторінки.'
+  login_manager.login_message_category = 'warning'
+  ```
+- `app/users/models.py`: функція `user_loader` (`db.session.get(User, int(user_id))`) і `class User(db.Model, UserMixin)`.
+- Після перевірки пароля викликається `login_user(user, remember=form.remember.data)`: id користувача записується в сесію рядком, а позначка «Запам'ятати мене» додає кукі `remember_token`. Якщо на сторінку входу перенаправив `@login_required`, після входу користувач повертається на потрібну сторінку (`?next=`), але лише в межах сайту.
+- `@login_required` захищає `account`, список користувачів і сторінку кукі та теми з лабораторної №4. Неавторизованого користувача перенаправляє на вхід із попередженням.
+- `account` отримує `current_user`; вихід — `logout_user()` з повідомленням «Ви вийшли з системи.».
 
-**Результат виконання (однаковий для обох варіантів)**
-```
-Багато до багатьох: теги постів andrii ['Flask', 'SQLAlchemy', 'Web']
-Зв'язок один-до-багатьох у SQLAlchemy dmytro ['Python', 'SQLAlchemy']
-Новини курсу (оновлено) andrii []
-Міграції з Flask-Migrate dmytro ['Flask']
-Знайомство з Flask-SQLAlchemy andrii ['Python', 'Flask', 'SQLAlchemy']
-```
+### 7. Додаткова функціональність
+- Авторизований користувач, який відкриває `/users/register` або `/users/login`, потрапляє на `account`.
+- Меню: для гостя — «Вхід» і «Реєстрація», для авторизованого — «Користувачі», «Профіль (ім'я)» і «Вихід».
+  ```html
+  {% if current_user.is_authenticated %}
+      ... Користувачі, Профіль ({{ current_user.username }}), Вихід
+  {% else %}
+      ... Вхід, Реєстрація
+  {% endif %}
+  ```
+- Список усіх користувачів доступний лише авторизованим (`@login_required`).
+- У формі нового поста автором за замовчуванням вибрано поточного користувача.
 
-**Порівняння**
+## Частина 3. Тестування
 
-| Варіант запиту | Кількість дописів | Кількість SELECT |
-|---|---|---|
-| Без `.options()` | 5 | 8 |
-| Із `joinedload()` та `selectinload()` | 5 | 2 |
-
-- Без `.options()`: 1 запит на дописи, 2 запити на авторів і 5 запитів на теги (по одному на кожен допис) — проблема N+1. Авторів лише 2, а не 5, бо вже завантажений користувач береться з identity map сесії і повторно не запитується.
-- З `joinedload(Post.user)` автори приходять у тому самому запиті (`LEFT OUTER JOIN users`), а `selectinload(Post.tags)` завантажує теги всіх дописів одним додатковим запитом `... WHERE post_tags.post_id IN (?, ?, ?, ?, ?)`. Разом 2 запити незалежно від кількості дописів.
-- Сторінка `/post` використовує другий варіант, тому теж виконує 2 SELECT (це перевіряє тест `test_posts_page_uses_constant_number_of_queries`).
-
-**SQL-журнал** (повністю у [docs/lab8_sql_log_without_options.txt](docs/lab8_sql_log_without_options.txt) і [docs/lab8_sql_log_with_options.txt](docs/lab8_sql_log_with_options.txt))
-
-<details>
-<summary>Варіант 1 — 8 SELECT</summary>
-
-```
-INFO sqlalchemy.engine.Engine BEGIN (implicit)
-INFO sqlalchemy.engine.Engine SELECT posts.id, posts.title, posts.content, posts.posted, posts.category, posts.is_active, posts.user_id
-FROM posts ORDER BY posts.id DESC
-INFO sqlalchemy.engine.Engine [generated in 0.00017s] ()
-INFO sqlalchemy.engine.Engine SELECT users.id, users.username, users.email, users.password
-FROM users
-WHERE users.id = ?
-INFO sqlalchemy.engine.Engine [generated in 0.00057s] (2,)
-INFO sqlalchemy.engine.Engine SELECT tags.id, tags.name
-FROM tags, post_tags
-WHERE ? = post_tags.post_id AND tags.id = post_tags.tag_id
-INFO sqlalchemy.engine.Engine [generated in 0.00012s] (5,)
-Багато до багатьох: теги постів andrii ['Flask', 'SQLAlchemy', 'Web']
-INFO sqlalchemy.engine.Engine SELECT users.id, users.username, users.email, users.password
-FROM users
-WHERE users.id = ?
-INFO sqlalchemy.engine.Engine [cached since 0.002592s ago] (1,)
-INFO sqlalchemy.engine.Engine SELECT tags.id, tags.name
-FROM tags, post_tags
-WHERE ? = post_tags.post_id AND tags.id = post_tags.tag_id
-INFO sqlalchemy.engine.Engine [cached since 0.0009378s ago] (4,)
-Зв'язок один-до-багатьох у SQLAlchemy dmytro ['Python', 'SQLAlchemy']
-INFO sqlalchemy.engine.Engine SELECT tags.id, tags.name
-FROM tags, post_tags
-WHERE ? = post_tags.post_id AND tags.id = post_tags.tag_id
-INFO sqlalchemy.engine.Engine [cached since 0.001296s ago] (3,)
-Новини курсу (оновлено) andrii []
-INFO sqlalchemy.engine.Engine SELECT tags.id, tags.name
-FROM tags, post_tags
-WHERE ? = post_tags.post_id AND tags.id = post_tags.tag_id
-INFO sqlalchemy.engine.Engine [cached since 0.001624s ago] (2,)
-Міграції з Flask-Migrate dmytro ['Flask']
-INFO sqlalchemy.engine.Engine SELECT tags.id, tags.name
-FROM tags, post_tags
-WHERE ? = post_tags.post_id AND tags.id = post_tags.tag_id
-INFO sqlalchemy.engine.Engine [cached since 0.001958s ago] (1,)
-Знайомство з Flask-SQLAlchemy andrii ['Python', 'Flask', 'SQLAlchemy']
-Кількість дописів: 5 | Кількість SELECT: 8
-```
-</details>
-
-<details>
-<summary>Варіант 2 — 2 SELECT</summary>
-
-```
-INFO sqlalchemy.engine.Engine BEGIN (implicit)
-INFO sqlalchemy.engine.Engine SELECT posts.id, posts.title, posts.content, posts.posted, posts.category, posts.is_active, posts.user_id, users_1.id AS id_1, users_1.username, users_1.email, users_1.password
-FROM posts LEFT OUTER JOIN users AS users_1 ON users_1.id = posts.user_id ORDER BY posts.id DESC
-INFO sqlalchemy.engine.Engine [generated in 0.00016s] ()
-INFO sqlalchemy.engine.Engine SELECT post_tags.post_id, tags.id, tags.name
-FROM post_tags JOIN tags ON tags.id = post_tags.tag_id
-WHERE post_tags.post_id IN (?, ?, ?, ?, ?)
-INFO sqlalchemy.engine.Engine [generated in 0.00065s] (5, 4, 3, 2, 1)
-Багато до багатьох: теги постів andrii ['Flask', 'SQLAlchemy', 'Web']
-Зв'язок один-до-багатьох у SQLAlchemy dmytro ['Python', 'SQLAlchemy']
-Новини курсу (оновлено) andrii []
-Міграції з Flask-Migrate dmytro ['Flask']
-Знайомство з Flask-SQLAlchemy andrii ['Python', 'Flask', 'SQLAlchemy']
-Кількість дописів: 5 | Кількість SELECT: 2
-```
-</details>
-
-## Нові міграції
-| Ревізія | Повідомлення | Що робить |
-|---|---|---|
-| `bfcc170b99fa` | Add users table | таблиця `users` |
-| `19b6905f12e6` | Link posts to users, drop author | `posts.user_id` + `fk_posts_user_id_users`, видалення `posts.author` |
-| `4961adba1470` | Add tags and post_tags | таблиці `tags` і `post_tags` |
+### 8. Тести (`tests/test_auth.py`, 37 тестів)
+- **Views Tests**: сторінки реєстрації та входу відкриваються (код 200, потрібні поля), меню гостя.
+- **Реєстрація**: користувач зберігається в БД з bcrypt-хешем замість пароля; повідомлення про успіх; відмова для зайнятих email і username, некоректного email, короткого або невідповідного шаблону імені, короткого пароля, різних паролів, порожніх полів; email нормалізується.
+- **Вхід і вихід**: успішний вхід (`_user_id` у сесії, `current_user`), дані на сторінці `account`, меню авторизованого користувача, неправильний пароль, невідомий email, користувач з паролем без хешу, кукі `remember_token`, перехід за `?next=` лише в межах сайту, вихід.
+- **Захищені сторінки**: перенаправлення гостя з повідомленням, список користувачів і повідомлення для порожнього списку, автор нового поста за замовчуванням.
+- **CSRF**: токен у формах, POST без токена відхиляється.
+- Тести лабораторної №4 (`tests/test_auth_cookies.py`) переписано на вхід користувача з БД.
+- Усього 209 тестів, усі проходять. Повний вивід: [docs/test_results.txt](docs/test_results.txt).
 
 ## Скриншоти
 
-### Пункти 2–4. Таблиці `users` і `posts` після міграцій
-![Схема users і posts](screenshots/lab8/01_db_schema_users_posts.png)
+### Частина 1, пункт 2. Користувач із хешованим паролем у `flask shell`
+![bcrypt у flask shell](screenshots/lab9/01_shell_bcrypt_hash.png)
 
-### Пункти 5–7. Користувачі, призначення автора, пости користувачів з id=2 і id=1
-![Пости користувачів](screenshots/lab8/02_shell_users_posts.png)
+### Пункт 3. Реєстрація: такий користувач уже існує в БД
+![Користувач уже існує](screenshots/lab9/02_register_user_exists.jpg)
 
-### Пункт 8. Список авторів із БД у формі нового поста
-Для скріншота список «Автор» показано розгорнутим: у ньому обидва користувачі з таблиці `users`.
+**Реєстрація: помилки валідації (ім'я, email, довжина пароля, підтвердження)**
 
-![Вибір автора](screenshots/lab8/03_add_post_author_select.jpg)
+![Помилки валідації](screenshots/lab9/03_register_validation_errors.jpg)
 
-**Після збереження: пост з автором `dmytro` у списку**
+**Успішна реєстрація: перенаправлення на вхід із повідомленням**
 
-![Пост з автором](screenshots/lab8/04_post_added_with_author.jpg)
+![Успішна реєстрація](screenshots/lab9/04_register_success.jpg)
 
-### Пункт 9. Міграція для `tags` і `post_tags`
-![Міграція тегів](screenshots/lab8/05_tags_migration.png)
+**Новий користувач збережений у БД з bcrypt-хешем, пароль перевіряється**
 
-### Пункт 10. Теги у `flask shell`: `append()`, теги поста, пости тегу
-![Теги у flask shell](screenshots/lab8/06_shell_tags.png)
+![Користувачі в БД](screenshots/lab9/10_db_users_hashes.png)
 
-### Пункт 11. Вибір кількох тегів у формі нового поста
-![Вибір тегів](screenshots/lab8/07_add_post_tags_form.jpg)
+### Пункт 4. Вхід
+**Неправильний пароль**
 
-**Після збереження: теги на картці поста**
+![Неправильний пароль](screenshots/lab9/05_login_wrong_password.jpg)
 
-![Пост з тегами](screenshots/lab8/08_post_added_with_tags.jpg)
+**Успішний вхід: сторінка `account`, у меню «Профіль» і «Вихід»**
 
-### Пункт 12. Стилізовані теги на сторінці поста
-![Теги на сторінці поста](screenshots/lab8/09_post_detail_tags.jpg)
+![Сторінка account](screenshots/lab9/06_login_success_account.jpg)
 
-**Перехід за тегом: пости з тегом `SQLAlchemy`**
+### Пункт 5. Список користувачів і їх кількість (лише для авторизованих)
+![Список користувачів](screenshots/lab9/07_users_list.jpg)
 
-![Фільтр за тегом](screenshots/lab8/10_posts_filtered_by_tag.jpg)
+### Частина 2. Вихід і захист сторінок
+**Вихід із системи: у меню знову «Вхід» і «Реєстрація»**
 
-### Пункт 13. Оптимізація завантаження
-**Тестові дані: кожен допис має автора, допис 1 має кілька тегів, тег `Flask` — у кількох дописах**
+![Вихід](screenshots/lab9/08_logout.jpg)
 
-![Тестові дані](screenshots/lab8/11_test_data.png)
+**Гість відкриває `/users/` → перенаправлення на вхід (`?next=/users/`) з повідомленням**
 
-**Варіант 1, без `.options()`: отримання дописів (1 SELECT)**
+![login_required](screenshots/lab9/09_login_required_redirect.jpg)
 
-![Без options — запит дописів](screenshots/lab8/12_without_options_query.png)
+### Частина 3. Тести
+**`python -m unittest tests.test_auth -v` і `python -m unittest discover tests` — 209 тестів, усі проходять**
 
-**Варіант 1, без `.options()`: цикл виконує додаткові SELECT, разом 8**
+![Тести](screenshots/lab9/11_tests.png)
 
-![Без options — цикл](screenshots/lab8/13_without_options_loop.png)
-
-**Варіант 2, `joinedload()` і `selectinload()`: 2 SELECT (окремий запуск `flask shell`)**
-
-![joinedload і selectinload](screenshots/lab8/14_with_joinedload_selectinload.png)
-
-### Тести
-**`python -m unittest tests.test_relations -v` і `python -m unittest discover tests` — 175 тестів, усі проходять**
-
-![Тести](screenshots/lab8/15_tests.png)
-
-## Тести
-- `tests/test_relations.py` — 16 тестів: зв'язок `User.posts` ↔ `Post.user` (зокрема каскадне видалення), зв'язок `Post.tags` ↔ `Tag.posts` і рядки `post_tags`, унікальність `username`, `email`, `name`, кількість SELECT в обох варіантах пункту 13 і на сторінці `/post`.
-- `tests/test_posts.py` доповнено перевірками вибору автора, вибору тегів, виводу тегів і фільтра за тегом.
-- Усього 175 тестів, усі проходять. Повний вивід: [docs/test_results.txt](docs/test_results.txt).
+## Структура (нове в цій лабораторній)
+```
+app/__init__.py                  bcrypt = Bcrypt(), login_manager = LoginManager()
+app/users/models.py              User(db.Model, UserMixin), user_loader, hash_password(), check_password()
+app/users/forms.py               RegistrationForm, LoginForm
+app/users/views.py               register, login, account, users_list, logout (+ @login_required)
+app/users/templates/users/       register.html, login.html, account.html, users.html
+app/templates/includes/navbar.html   меню для гостя й авторизованого користувача
+tests/test_auth.py               тести реєстрації, входу, виходу, захищених сторінок
+```
 
 ## Запуск
 ```bash
