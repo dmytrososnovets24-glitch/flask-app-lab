@@ -17,15 +17,15 @@
 ### 3–4. Двосторонній зв'язок `Post` ↔ `User`
 - У моделі `Post` видалено поле `author` і додано зовнішній ключ та зв'язок:
   ```python
-  user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"))
-  user: Mapped[Optional["User"]] = relationship(back_populates="posts")
+  user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+  user: Mapped["User"] = relationship(back_populates="posts")
   ```
 - У моделі `User`:
   ```python
   posts: Mapped[list["Post"]] = relationship(back_populates="user", cascade="all, delete-orphan")
   ```
 - `flask db migrate -m "Link posts to users, drop author"` → `flask db upgrade` (ревізія `19b6905f12e6`). Завдяки `naming_convention` з лабораторної №7 обмеження отримало ім'я `fk_posts_user_id_users`, тому міграція застосувалась і відкочується без ручних правок.
-- `user_id` зроблено `Optional` (NULL дозволено): у таблиці вже були пости, а користувачів на момент міграції ще не було, і за пунктом 6 автора отримують лише деякі пости.
+- У таблиці `posts` уже були пости, а користувачів на момент цієї міграції ще не було, тому стовпець `user_id` спершу додано як NULL (спосіб із лабораторної №7: додати стовпець, заповнити, зробити NOT NULL). Коли всім постам призначено авторів (пункти 6 і 13), міграцією `flask db migrate -m "Posts require an author"` (ревізія `b6b765fd0cc1`) стовпець став `NOT NULL`, тож модель і схема БД збігаються з кодом у завданні (`Mapped[int]`). Пост без автора тепер не зберігається (`IntegrityError: NOT NULL constraint failed: posts.user_id`).
 
 ### 5–7. Користувачі та їхні пости у `flask shell`
 - Додано двох користувачів: `dmytro` (id=1) і `andrii` (id=2).
@@ -203,6 +203,7 @@ INFO sqlalchemy.engine.Engine [generated in 0.00065s] (5, 4, 3, 2, 1)
 | `bfcc170b99fa` | Add users table | таблиця `users` |
 | `19b6905f12e6` | Link posts to users, drop author | `posts.user_id` + `fk_posts_user_id_users`, видалення `posts.author` |
 | `4961adba1470` | Add tags and post_tags | таблиці `tags` і `post_tags` |
+| `b6b765fd0cc1` | Posts require an author | `posts.user_id` стає `NOT NULL` (коли всі пости вже мають авторів) |
 
 ## Скриншоти
 
@@ -210,6 +211,8 @@ INFO sqlalchemy.engine.Engine [generated in 0.00065s] (5, 4, 3, 2, 1)
 ![Схема users і posts](screenshots/lab8/01_db_schema_users_posts.png)
 
 ### Пункти 5–7. Користувачі, призначення автора, пости користувачів з id=2 і id=1
+На цьому етапі пост 2 ще без автора; пізніше автора отримали всі пости, і `user_id` став обов'язковим (див. нижче).
+
 ![Пости користувачів](screenshots/lab8/02_shell_users_posts.png)
 
 ### Пункт 8. Список авторів із БД у формі нового поста
@@ -258,15 +261,20 @@ INFO sqlalchemy.engine.Engine [generated in 0.00065s] (5, 4, 3, 2, 1)
 
 ![joinedload і selectinload](screenshots/lab8/14_with_joinedload_selectinload.png)
 
+### Обов'язковий автор поста
+**Після міграції `b6b765fd0cc1`: `user_id INTEGER NOT NULL`, пост без автора відхиляється, історія міграцій**
+
+![user_id NOT NULL](screenshots/lab8/16_user_id_not_null.png)
+
 ### Тести
-**`python -m unittest tests.test_relations -v` і `python -m unittest discover tests` — 175 тестів, усі проходять**
+**`python -m unittest tests.test_relations -v` і `python -m unittest discover tests` — 176 тестів, усі проходять**
 
 ![Тести](screenshots/lab8/15_tests.png)
 
 ## Тести
-- `tests/test_relations.py` — 16 тестів: зв'язок `User.posts` ↔ `Post.user` (зокрема каскадне видалення), зв'язок `Post.tags` ↔ `Tag.posts` і рядки `post_tags`, унікальність `username`, `email`, `name`, кількість SELECT в обох варіантах пункту 13 і на сторінці `/post`.
+- `tests/test_relations.py` — 16 тестів: зв'язок `User.posts` ↔ `Post.user` (зокрема каскадне видалення і заборона поста без автора), зв'язок `Post.tags` ↔ `Tag.posts` і рядки `post_tags`, унікальність `username`, `email`, `name`, кількість SELECT в обох варіантах пункту 13 і на сторінці `/post`.
 - `tests/test_posts.py` доповнено перевірками вибору автора, вибору тегів, виводу тегів і фільтра за тегом.
-- Усього 175 тестів, усі проходять. Повний вивід: [docs/test_results.txt](docs/test_results.txt).
+- Усього 176 тестів, усі проходять. Повний вивід: [docs/test_results.txt](docs/test_results.txt).
 
 ## Запуск
 ```bash
